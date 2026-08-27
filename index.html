@@ -467,7 +467,7 @@ a { color: var(--cp-link); }
     </div>
     <div class="header-actions">
       <span class="usage-pill" id="usagePill" title="Live Gemini calls made this session">Live calls: 0</span>
-      <div class="toggle" id="modeToggle" title="Toggle live AI vs. safe mode">
+      <div class="toggle" id="modeToggle" title="Toggle live AI vs. offline mode">
         <span class="dot"></span><span>Live AI: <strong id="modeLabel">Gemini</strong></span>
       </div>
       <div class="settings-wrap">
@@ -557,7 +557,7 @@ a { color: var(--cp-link); }
 <div class="modal-bg" id="keyModal">
   <div class="modal">
     <h3>Live AI setup</h3>
-    <p>Pick a provider and paste a free API key to run the assistant live. Leave blank to run in <strong>safe mode</strong> (pre-scripted, never fails). The key stays on this device.</p>
+    <p>Pick a provider and paste a free API key to run the assistant live. Leave blank to run in <strong>offline mode</strong> (pre-scripted, works without a key). The key stays on this device.</p>
     <div class="field">
       <label for="providerInput">Provider</label>
       <select id="providerInput">
@@ -1094,7 +1094,7 @@ function renderMode() {
   tog.classList.toggle("safe", !live);
   const pl = (PROVIDERS[cfg.provider]||{}).label || "Gemini";
   const shortName = { "Google Gemini":"Gemini", "Groq (fast, free)":"Groq", "OpenRouter (free models)":"OpenRouter" }[pl] || pl;
-  $("modeLabel").textContent = live ? shortName : "Safe mode";
+  $("modeLabel").textContent = live ? shortName : "Offline mode";
 }
 
 function renderChips() {
@@ -1293,10 +1293,12 @@ function guardInput(text){
     return { block:true, message:"I can't help with that. I'm a job-search assistant — if you're dealing with something serious, please reach out to a qualified professional or local support service." };
   }
   // 2) On-topic check: does this relate to a job search?
-  const jobTerms = /\b(job|jobs|role|roles|position|posting|application|apply|applied|applying|recruit|recruiter|interview|screen|offer|resume|cv|cover letter|referral|refer|network|networking|coffee chat|hiring|manager|company|companies|pm|product|program|engineer|analyst|designer|salary|comp|offer|onboard|linkedin|follow.?up|reach out|outreach|career|opening|team|hr|talent|panel|loop|take.?home|assessment|portfolio|standup|stakeholder|okr|launch|ship|roadmap)\b/;
+  const jobTerms = /\b(job|jobs|role|roles|position|posting|application|apply|applied|applying|recruit|recruiter|recruiting|interview|interviews|interviewing|screen|screening|offer|offers|reject|rejected|rejection|ghost|ghosted|resume|cv|cover letter|referral|refer|referred|network|networking|connect|connecting|connection|coffee chat|hiring|hire|hired|manager|company|companies|\bpm\b|product|program|engineer|engineering|analyst|designer|developer|scientist|salary|comp|compensation|negotiate|negotiating|onboard|onboarding|linkedin|follow.?up|reach out|outreach|cold email|career|careers|opening|openings|team|\bhr\b|talent|panel|loop|take.?home|assessment|portfolio|standup|stakeholder|okr|roadmap|prep|prepare|preparing|switch(ing)? careers?|break into|hunt|search|opportunit)/;
+  const peopleAt = /\b(people|contacts?|folks|someone)\b[\s\w]*\bat\b/.test(s); // "connect me with people at X"
+  const emotional = /\b(burnt? out|discouraged|nervous|excited|stressed)\b/.test(s) && /\b(job|search|interview|application|hunt|career)\b/.test(s);
   const followUpish = text.trim().length < 60 && /\b(make (that|it)|change|move|reschedule|set|due|instead|rename|update|remove|delete|drop|add|yes|no|friday|monday|tuesday|wednesday|thursday|saturday|sunday|tomorrow|today|next week|this week)\b/i.test(text);
   const looksJd = looksLikeJD(text);
-  if (!jobTerms.test(s) && !followUpish && !looksJd && text.trim().length > 3) {
+  if (!jobTerms.test(s) && !peopleAt && !emotional && !followUpish && !looksJd && text.trim().length > 3) {
     return { block:true, offtopic:true, message:"I'm your Career Wingman — I can only help with your job search: roles, applications, interviews, networking, and the tasks around them. Tell me what's happening with a role and I'll build a plan." };
   }
   return { block:false };
@@ -1686,9 +1688,59 @@ function safePlan(userText){
       ],
     };
   }
-  if (s.includes("recruiter") || s.includes("applied") || s.includes("no reply") || s.includes("nudge")) {
+  // Rejection — acknowledge, then move forward.
+  if (/\b(reject|rejected|rejection|didn.?t get|turned down|no longer|unsuccessful)\b/.test(s)) {
     return {
-      reply: "Understood — that application has gone quiet.",
+      reply: "Sorry to hear that — rejections sting, but let's turn it into momentum.",
+      company: null,
+      actions: [
+        { type:"task", company:"", due:"This week", text:"Ask for brief feedback (a short, gracious note)" },
+        { type:"task", company:"", due:"This week", text:"Log 1 lesson to apply to your next application" },
+        { type:"advice", text:"It's a numbers game — keep 3+ active leads so no single 'no' stalls you. Want to add another role to the pipeline?" },
+      ],
+    };
+  }
+  // Interview scheduled / happened.
+  if ((/\binterview|final round|onsite|on-site|phone screen|hiring manager (call|round)\b/.test(s)) && !/\b(ghost|ghosted|no reply|hasn.?t replied|no response|reject|rejected|radio silence)\b/.test(s)) {
+    return {
+      reply: "An interview — let's get you ready.",
+      company: null,
+      actions: [
+        { type:"advice", text:"How I'd prep:\n1) List the 4-5 outcomes the role is hired to deliver.\n2) Prepare 3 STAR stories mapped to those outcomes.\n3) Research the team + one recent thing they shipped.\n4) Have 3 smart questions ready to ask them." },
+        { type:"task", company:"", due:"Before the interview", text:"Rehearse 3 STAR stories out loud" },
+        { type:"task", company:"", due:"Before the interview", text:"Prepare 3 questions to ask the interviewer" },
+        { type:"followup_ask", text:"Want to draft a thank-you note to send afterward? Type your angle." },
+      ],
+    };
+  }
+  // Offer / negotiation.
+  if (/\boffer|negotiat|salary|compensation|comp package|counter/.test(s)) {
+    return {
+      reply: "Congrats — let's approach the offer thoughtfully.",
+      company: null,
+      actions: [
+        { type:"advice", text:"How I'd handle it:\n1) Thank them and ask for the full package in writing.\n2) Benchmark base/bonus/equity against market data.\n3) Anchor on your strongest lever (competing offer, scope, or level).\n4) Negotiate the whole package, not just base." },
+        { type:"task", company:"", due:"This week", text:"Benchmark the offer against market data" },
+        { type:"task", company:"", due:"This week", text:"Draft a polite counter with your top ask" },
+      ],
+    };
+  }
+  // Fresh application (they JUST applied) — not "gone quiet".
+  if (/\b(just |recently )?(applied|submitted|sent).*(application|resume|role|job|position|to|for)\b|\bapplied (to|for)\b/.test(s) && !/no reply|ghost|hasn.?t|quiet|weeks?|days?/.test(s)) {
+    return {
+      reply: "Nice — application in. Let's stay on top of it.",
+      company: null,
+      actions: [
+        { type:"task", company:"", due:"1 week", text:"Follow up if you haven't heard back in a week" },
+        { type:"task", company:"", due:"This week", text:"Find a person on the team for a warm intro" },
+        { type:"followup_ask", text:"Want to line up a referral message? Type your angle." },
+      ],
+    };
+  }
+  // Application has gone quiet (ghosted / no reply).
+  if (/\b(ghost|ghosted|no reply|hasn.?t replied|no response|nudge|radio silence|been (a )?(week|weeks|days))\b/.test(s) || s.includes("recruiter")) {
+    return {
+      reply: "Understood — that one's gone quiet. Let's nudge it.",
       company: null,
       actions: [
         { type:"task", company:"", due:"This week", text:"Send a brief, warm nudge to the recruiter" },
@@ -1700,7 +1752,7 @@ function safePlan(userText){
     reply: "Here's how I'd turn that into next steps.",
     company: null,
     actions: [
-      { type:"advice", text:"I'd (1) capture this against the right role, (2) decide the single next action, and (3) set a due date so it doesn't slip." },
+      { type:"advice", text:"I'd (1) capture this against the right role, (2) decide the single next action, and (3) set a due date so it doesn't slip. Which company is this about?" },
       { type:"task", company:"", due:"This week", text: userText.length>70 ? userText.slice(0,70)+"…" : userText },
     ],
   };
@@ -2021,17 +2073,17 @@ async function handleSend(){
     const badkey = /401|403|check your key/i.test(failReason);
     const provName = (PROVIDERS[cfg.provider]||{}).label || "the provider";
     let tip = "Open <strong>Settings → API key</strong> to check your provider and key.";
-    if (rate) tip = `You hit ${provName}'s free-tier rate limit — wait a minute, switch provider, or keep using safe mode (zero tokens).`;
+    if (rate) tip = `You hit ${provName}'s free-tier rate limit — wait a minute, switch provider, or keep using offline mode (zero tokens).`;
     else if (busy503) tip = `${provName}'s servers are momentarily busy — I retried a few times. Just hit Send again in a moment.`;
     else if (timeout) tip = "The request timed out — check your connection and try Send again.";
     else if (badkey) tip = `That key was rejected — open <strong>Settings → API key</strong> and re-check your ${provName} key.`;
     else if (four04) tip = `The selected model isn't available on ${provName}; the app tried alternates. Open <strong>Settings → API key</strong> and pick another model.`;
-    addBotMsg(`<span style="color:var(--cp-warning)">&#9888; Live AI unavailable (${esc(failReason)}) — used safe mode. ${tip}</span>`);
+    addBotMsg(`<span style="color:var(--cp-warning)">&#9888; Live AI unavailable (${esc(failReason)}) — used offline mode. ${tip}</span>`);
   } else if (usedLive) {
     addBotMsg(`<span style="color:var(--cp-success)">&#9679; Live Gemini responded.</span>`);
   } else if (!cfg.apiKey && !nokeyNudged) {
     nokeyNudged = true;
-    const m = addBotMsg(`<span style="color:var(--cp-text-muted)">You're in <strong>safe mode</strong> (scripted answers). For AI tailored to <em>you</em>, add a free API key (Gemini, Groq, or OpenRouter) — <a href="#" id="nokeyLink">set it up</a>.</span>`);
+    const m = addBotMsg(`<span style="color:var(--cp-text-muted)">You're in <strong>offline mode</strong> (scripted answers). For AI tailored to <em>you</em>, add a free API key (Gemini, Groq, or OpenRouter) — <a href="#" id="nokeyLink">set it up</a>.</span>`);
     const link = m.querySelector("#nokeyLink");
     if (link) link.onclick = (e)=>{ e.preventDefault(); openKey(); };
   }
@@ -2055,7 +2107,7 @@ function openKey(){
   fillModelOptions();
   $("keyInput").value = cfg.apiKey;
   $("proxyInput").value = cfg.proxyUrl;
-  $("keyStatus").textContent = cfg.apiKey ? `Live mode active (${(PROVIDERS[cfg.provider]||{}).label||cfg.provider}).` : "No key set — running in safe mode.";
+  $("keyStatus").textContent = cfg.apiKey ? `Live mode active (${(PROVIDERS[cfg.provider]||{}).label||cfg.provider}).` : "No key set — running in offline mode.";
   $("keyModal").classList.add("open");
 }
 function closeKey(){ $("keyModal").classList.remove("open"); }
