@@ -1527,7 +1527,7 @@ async function callOpenAICompatible(promptText){
   for (const model of models) {
     for (let attempt = 0; attempt < 3; attempt++) {
       const ctrl = new AbortController();
-      const timer = setTimeout(()=>ctrl.abort(), 15000);
+      const timer = setTimeout(()=>ctrl.abort(), 20000);
       try {
         const bodyObj = {
           model,
@@ -1569,7 +1569,7 @@ async function callOpenAICompatible(promptText){
       } catch(e){
         clearTimeout(timer); lastErr = e;
         const msg = String(e.message);
-        if (e.name === "AbortError" && attempt < 2) { await sleep(500); continue; }
+        if (e.name === "AbortError") { throw new Error("timeout"); } // slow provider — stop, don't burn quota walking every model
         if (/404|400/.test(msg)) break; // next model
         if (/503|500|502|busy/.test(msg) && attempt < 2) continue;
         throw e; // 429 / bad key / parse — stop
@@ -1591,7 +1591,7 @@ async function callGemini(userText, promptOverride){
     // Retry transient errors (503 overloaded / 500) up to 3 attempts with backoff
     for (let attempt = 0; attempt < 3; attempt++) {
       const ctrl = new AbortController();
-      const timer = setTimeout(()=>ctrl.abort(), 15000);
+      const timer = setTimeout(()=>ctrl.abort(), 25000);
       try {
         const res = await fetch(url, {
           method: "POST",
@@ -1622,7 +1622,7 @@ async function callGemini(userText, promptOverride){
         clearTimeout(timer);
         lastErr = e;
         const msg = String(e.message);
-        if (e.name === "AbortError" && attempt < 2) { await sleep(500); continue; } // retry timeouts
+        if (e.name === "AbortError") { throw new Error("timeout"); } // slow provider — stop, don't burn quota walking every model
         if (msg.indexOf("404") !== -1 || msg.indexOf("503") !== -1 || msg.indexOf("500") !== -1) break; // move to next model
         throw e; // 429, bad key, parse errors etc. — stop
       }
@@ -2156,12 +2156,12 @@ async function handleSend(){
     let tip = "Open <strong>Settings → API key</strong> to check your provider and key.";
     if (rate) tip = `You hit ${provName}'s free-tier rate limit — wait a minute, switch provider, or keep using offline mode (zero tokens).`;
     else if (busy503) tip = `${provName}'s servers are momentarily busy — I retried a few times. Just hit Send again in a moment.`;
-    else if (timeout) tip = "The request timed out — check your connection and try Send again.";
+    else if (timeout) tip = `${provName}'s free tier can be slow — I now wait longer, so just hit Send once more (it usually lands on the retry).`;
     else if (badkey) tip = `That key was rejected — open <strong>Settings → API key</strong> and re-check your ${provName} key.`;
     else if (four04) tip = `The selected model isn't available on ${provName}; the app tried alternates. Open <strong>Settings → API key</strong> and pick another model.`;
     addBotMsg(`<span style="color:var(--cp-warning)">&#9888; Live AI unavailable (${esc(failReason)}) — used offline mode. ${tip}</span>`);
   } else if (usedLive) {
-    addBotMsg(`<span style="color:var(--cp-success)">&#9679; Live Gemini responded.</span>`);
+    addBotMsg(`<span style="color:var(--cp-success)">&#9679; Live ${esc((PROVIDERS[cfg.provider]||{}).label || "AI")} responded.</span>`);
   } else if (!cfg.apiKey && !nokeyNudged) {
     nokeyNudged = true;
     const m = addBotMsg(`<span style="color:var(--cp-text-muted)">You're in <strong>offline mode</strong> (scripted answers). For AI tailored to <em>you</em>, add a free API key (Gemini, Groq, or OpenRouter) — <a href="#" id="nokeyLink">set it up</a>.</span>`);
@@ -2276,8 +2276,19 @@ function init(){
   $("keyCancel").onclick = closeKey;
   $("providerInput").onchange = fillModelOptions;
   $("keySave").onclick = () => {
-    cfg.provider = $("providerInput").value;
-    cfg.apiKey = $("keyInput").value.trim();
+    const newProvider = $("providerInput").value;
+    const newKey = $("keyInput").value.trim();
+    // Warn if the key format clearly doesn't match the chosen provider.
+    const mismatch =
+      (newProvider === "gemini" && newKey && !/^AIza/i.test(newKey)) ||
+      (newProvider === "groq" && newKey && !/^gsk_/i.test(newKey)) ||
+      (newProvider === "openrouter" && newKey && !/^sk-or-/i.test(newKey));
+    if (mismatch) {
+      const label = (PROVIDERS[newProvider]||{}).keyHint || "";
+      if (!confirm(`That key doesn't look like a ${(PROVIDERS[newProvider]||{}).label} key (expected format "${label}"). Save it anyway?`)) return;
+    }
+    cfg.provider = newProvider;
+    cfg.apiKey = newKey;
     cfg.model = $("modelInput").value;
     cfg.proxyUrl = $("proxyInput").value.trim();
     discoveredModels = null; discoveredFor = null; planCache && Object.keys(planCache).forEach(k=>delete planCache[k]);
