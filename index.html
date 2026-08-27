@@ -732,28 +732,44 @@ const PROVIDERS = {
   gemini: { label:"Google Gemini", keyHint:"AIza…", keyUrl:"https://aistudio.google.com/app/apikey",
     models:["gemini-2.0-flash","gemini-flash-latest","gemini-1.5-flash","gemini-2.5-flash"], defaultModel:"gemini-2.0-flash" },
   groq: { label:"Groq (fast, free)", keyHint:"gsk_…", keyUrl:"https://console.groq.com/keys",
-    models:["llama-3.3-70b-versatile","llama-3.1-8b-instant","gemma2-9b-it","llama-3.2-3b-preview"], defaultModel:"llama-3.3-70b-versatile" },
+    models:["llama-3.1-8b-instant","llama-3.3-70b-versatile","gemma2-9b-it"], defaultModel:"llama-3.1-8b-instant" },
   openrouter: { label:"OpenRouter (free models)", keyHint:"sk-or-…", keyUrl:"https://openrouter.ai/keys",
     models:["meta-llama/llama-3.3-70b-instruct:free","google/gemini-2.0-flash-exp:free","mistralai/mistral-7b-instruct:free"], defaultModel:"meta-llama/llama-3.3-70b-instruct:free" },
 };
 function providerModel(){
   const p = PROVIDERS[cfg.provider] || PROVIDERS.gemini;
-  return cfg.model || p.defaultModel;
+  // Use the saved model only if it belongs to the current provider; else the provider default.
+  if (cfg.model && (p.models||[]).indexOf(cfg.model) >= 0) return cfg.model;
+  return p.defaultModel;
 }
 const MODEL_FALLBACKS = ["gemini-2.0-flash","gemini-2.0-flash-001","gemini-flash-latest","gemini-2.5-flash","gemini-1.5-flash","gemini-1.5-flash-latest","gemini-1.5-flash-8b","gemini-pro-latest"];
-let discoveredModels = null; // cache of models the key can actually use
+let discoveredModels = null; // cache of models the key can actually use (provider-specific)
+let discoveredFor = null;    // which provider the cache belongs to
 async function discoverModels(){
-  if (discoveredModels) return discoveredModels;
+  if (discoveredModels && discoveredFor === cfg.provider) return discoveredModels;
   try {
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(cfg.apiKey)}`);
-    if (!res.ok) return null;
-    const data = await res.json();
-    const names = (data.models||[])
-      .filter(m => (m.supportedGenerationMethods||[]).includes("generateContent") && /flash|pro/i.test(m.name))
-      .map(m => m.name.replace(/^models\//,""));
-    // prefer flash models first
-    names.sort((a,b)=> (/flash/i.test(b)?1:0) - (/flash/i.test(a)?1:0));
-    discoveredModels = names;
+    let names = [];
+    if (cfg.provider === "gemini") {
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(cfg.apiKey)}`);
+      if (!res.ok) return null;
+      const data = await res.json();
+      names = (data.models||[])
+        .filter(m => (m.supportedGenerationMethods||[]).includes("generateContent") && /flash|pro/i.test(m.name))
+        .map(m => m.name.replace(/^models\//,""));
+      names.sort((a,b)=> (/flash/i.test(b)?1:0) - (/flash/i.test(a)?1:0)); // flash first
+    } else if (cfg.provider === "groq" || cfg.provider === "openrouter") {
+      const url = cfg.provider === "groq" ? "https://api.groq.com/openai/v1/models" : "https://openrouter.ai/api/v1/models";
+      const res = await fetch(url, { headers: { "Authorization":"Bearer " + cfg.apiKey } });
+      if (!res.ok) return null;
+      const data = await res.json();
+      names = (data.data||[]).map(m => m.id).filter(Boolean);
+      if (cfg.provider === "openrouter") names = names.filter(n => /:free$/.test(n)); // free models only
+      // prefer chat-capable text models, put instruct/chat ones first
+      names = names.filter(n => !/whisper|tts|embed|guard|vision|image/i.test(n));
+      names.sort((a,b)=> (/instruct|versatile|chat|instant/i.test(b)?1:0) - (/instruct|versatile|chat|instant/i.test(a)?1:0));
+    }
+    if (!names.length) return null;
+    discoveredModels = names; discoveredFor = cfg.provider;
     return names;
   } catch(e){ return null; }
 }
@@ -1453,8 +1469,16 @@ async function callOpenAICompatible(promptText){
     ? "https://api.groq.com/openai/v1/chat/completions"
     : "https://openrouter.ai/api/v1/chat/completions";
   const p = PROVIDERS[cfg.provider] || {};
-  // try the chosen model first, then the rest of the provider's list
-  const models = [providerModel()].concat((p.models||[]).filter(m=>m!==providerModel()));
+  // Prefer LIVE model list from the provider; fall back to the built-in list only if discovery fails.
+  const live = await discoverModels();
+  let models;
+  if (live && live.length) {
+    // put the user's chosen model first if it's actually available, else use discovered order
+    models = (cfg.model && live.indexOf(cfg.model) >= 0) ? [cfg.model].concat(live.filter(m=>m!==cfg.model)) : live.slice();
+  } else {
+    models = [providerModel()].concat((p.models||[]).filter(m=>m!==providerModel()));
+  }
+  models = models.slice(0, 8); // cap attempts
   const sleep = ms => new Promise(r=>setTimeout(r, ms));
   let lastErr = new Error("unknown");
   for (const model of models) {
@@ -1478,15 +1502,20 @@ async function callOpenAICompatible(promptText){
           body: JSON.stringify(bodyObj)
         });
         clearTimeout(timer);
-        if (res.status === 404 || res.status === 400) { lastErr = new Error("API " + res.status + " (model unavailable)"); break; } // try next model
-        if (res.status === 429) throw new Error("429 rate limit — free quota reached");
-        if (res.status === 401 || res.status === 403) throw new Error("API " + res.status + " (check your key)");
-        if (res.status === 503 || res.status === 500 || res.status === 502) {
-          lastErr = new Error("API " + res.status + " (servers busy)");
-          if (attempt < 2) { await sleep(700*(attempt+1)); continue; }
-          break; // try next model
+        if (!res.ok) {
+          let detail = "";
+          try { const errData = await res.json(); detail = errData?.error?.message || errData?.error?.code || ""; } catch(e){}
+          const shortDetail = detail ? " — " + detail.slice(0,120) : "";
+          if (res.status === 404 || res.status === 400) { lastErr = new Error("API " + res.status + shortDetail); break; } // bad model/request → try next model
+          if (res.status === 429) throw new Error("429 rate limit — free quota reached" + shortDetail);
+          if (res.status === 401 || res.status === 403) throw new Error("API " + res.status + " (check your key)" + shortDetail);
+          if (res.status === 503 || res.status === 500 || res.status === 502) {
+            lastErr = new Error("API " + res.status + " (servers busy)");
+            if (attempt < 2) { await sleep(700*(attempt+1)); continue; }
+            break;
+          }
+          throw new Error("API " + res.status + shortDetail);
         }
-        if (!res.ok) throw new Error("API " + res.status);
         const data = await res.json();
         const txt = data?.choices?.[0]?.message?.content;
         if (!txt) throw new Error("empty response");
@@ -2204,7 +2233,7 @@ function init(){
     cfg.apiKey = $("keyInput").value.trim();
     cfg.model = $("modelInput").value;
     cfg.proxyUrl = $("proxyInput").value.trim();
-    discoveredModels = null; planCache && Object.keys(planCache).forEach(k=>delete planCache[k]);
+    discoveredModels = null; discoveredFor = null; planCache && Object.keys(planCache).forEach(k=>delete planCache[k]);
     try {
       localStorage.setItem("jhcos_provider", cfg.provider);
       localStorage.setItem("jhcos_key", cfg.apiKey);
