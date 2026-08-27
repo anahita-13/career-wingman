@@ -1,0 +1,1440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Job Hunt Chief of Staff</title>
+<script>
+  (() => {
+    const param = new URLSearchParams(window.location.search).get("scoutTheme");
+    const theme =
+      param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", theme);
+  })();
+</script>
+<style>
+:root {
+  color-scheme: light;
+  --cp-bg: #f7f4ef;
+  --cp-bg-elevated: #fcfbf8;
+  --cp-surface: #ffffff;
+  --cp-surface-soft: #f5f5f5;
+  --cp-border: #dedede;
+  --cp-border-strong: #919191;
+  --cp-text: #242424;
+  --cp-text-muted: #5c5c5c;
+  --cp-text-soft: #6f6f6f;
+  --cp-accent: #b11f4b;
+  --cp-accent-hover: #9a1a41;
+  --cp-accent-soft: rgba(177, 31, 75, 0.08);
+  --cp-accent-fg: #ffffff;
+  --cp-success: #16a34a;
+  --cp-danger: #dc2626;
+  --cp-warning: #f59e0b;
+  --cp-link: #0078d4;
+  --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+  --cp-overlay: rgba(255, 255, 255, 0.8);
+  --cp-panel: rgba(255, 255, 255, 0.86);
+  --cp-panel-strong: rgba(255, 255, 255, 0.96);
+  --cp-sheen: rgba(255, 255, 255, 0.55);
+  --cp-highlight: rgba(177, 31, 75, 0.12);
+}
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --cp-bg: #3d3b3a;
+  --cp-bg-elevated: #343231;
+  --cp-surface: #292929;
+  --cp-surface-soft: #2e2e2e;
+  --cp-border: #474747;
+  --cp-border-strong: #5f5f5f;
+  --cp-text: #dedede;
+  --cp-text-muted: #919191;
+  --cp-text-soft: #b0b0b0;
+  --cp-accent: #fd8ea1;
+  --cp-accent-hover: #fb7b91;
+  --cp-accent-soft: rgba(253, 142, 161, 0.14);
+  --cp-accent-fg: #1a1a1a;
+  --cp-success: #4ade80;
+  --cp-danger: #f87171;
+  --cp-warning: #fbbf24;
+  --cp-link: #4da6ff;
+  --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+  --cp-overlay: rgba(41, 41, 41, 0.88);
+  --cp-panel: rgba(41, 41, 41, 0.72);
+  --cp-panel-strong: rgba(41, 41, 41, 0.96);
+  --cp-sheen: rgba(255, 255, 255, 0.04);
+  --cp-highlight: rgba(253, 142, 161, 0.12);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--cp-bg);
+  color: var(--cp-text);
+  font-family: "Segoe UI", Aptos, Calibri, -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 15px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+.wrap { max-width: 1240px; margin: 0 auto; padding: 20px 22px 60px; }
+
+/* Header */
+header.app {
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  padding-bottom: 16px; margin-bottom: 18px;
+  border-bottom: 1px solid var(--cp-border);
+}
+.brand { display: flex; align-items: center; gap: 12px; }
+.brand-mark {
+  width: 40px; height: 40px; border-radius: 10px;
+  background: var(--cp-accent); color: var(--cp-accent-fg);
+  display: grid; place-items: center; font-weight: 700; font-size: 18px;
+  box-shadow: 0 0 2px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.14);
+}
+.brand h1 { font-size: 19px; margin: 0; line-height: 1.1; }
+.brand p { font-size: 12.5px; margin: 2px 0 0; color: var(--cp-text-muted); }
+.header-actions { margin-left: auto; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+.btn {
+  font-family: inherit; font-size: 13px; font-weight: 600;
+  border-radius: 0.625rem; border: 1px solid var(--cp-border);
+  background: var(--cp-surface); color: var(--cp-text);
+  padding: 8px 13px; cursor: pointer; transition: all .12s ease;
+  display: inline-flex; align-items: center; gap: 7px;
+}
+.btn:hover { border-color: var(--cp-border-strong); }
+.btn-primary { background: var(--cp-accent); border-color: var(--cp-accent); color: var(--cp-accent-fg); }
+.btn-primary:hover { background: var(--cp-accent-hover); border-color: var(--cp-accent-hover); }
+.btn-ghost { background: transparent; }
+.btn-danger { color: var(--cp-danger); }
+.btn-sm { padding: 5px 10px; font-size: 12px; }
+
+.toggle {
+  display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px;
+  color: var(--cp-text-muted); user-select: none; cursor: pointer;
+  padding: 6px 11px; border: 1px solid var(--cp-border); border-radius: 999px;
+  background: var(--cp-surface);
+}
+.toggle .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--cp-success); }
+.toggle.safe .dot { background: var(--cp-warning); }
+.toggle strong { color: var(--cp-text); font-weight: 600; }
+
+/* Layout */
+.pipeline-row {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 18px;
+}
+.grid-main { display: grid; grid-template-columns: 1.5fr 1fr; gap: 18px; align-items: start; }
+@media (max-width: 900px) {
+  .pipeline-row { grid-template-columns: 1fr; }
+  .grid-main { grid-template-columns: 1fr; }
+}
+@media (max-width: 640px) {
+  .wrap { padding: 12px 12px 40px; }
+  header.app { gap: 10px; }
+  .brand h1 { font-size: 17px; }
+  .brand p { display: none; }
+  .header-actions { width: 100%; gap: 7px; }
+  .usage-pill { order: 3; }
+  .assistant { min-height: 360px; }
+  .chat-log { max-height: 300px; overflow-y: auto; }
+  .msg { max-width: 100%; }
+  .cal-cell { min-height: 46px; padding: 3px; }
+  .cal-pip { font-size: 8.5px; padding: 0 2px; }
+  .cal-cell .dnum { font-size: 10px; }
+  .cal-more { display: none; }
+  .modal { padding: 16px; }
+  .pcard-actions, .t-actions, .c-actions { opacity: 1; } /* touch: always show controls */
+}
+
+.card {
+  background: var(--cp-surface); border: 1px solid var(--cp-border);
+  border-radius: 16px; padding: 16px;
+  box-shadow: 0 0 2px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.14);
+}
+.section-title {
+  font-size: 12px; text-transform: uppercase; letter-spacing: .06em;
+  color: var(--cp-text-soft); font-weight: 700; margin: 0 0 12px;
+  display: flex; align-items: center; gap: 8px;
+}
+.section-title .count {
+  background: var(--cp-surface-soft); border: 1px solid var(--cp-border);
+  border-radius: 999px; padding: 1px 8px; font-size: 11px; letter-spacing: 0;
+  text-transform: none; color: var(--cp-text-muted);
+}
+
+/* Pipeline cards */
+.pcard { position: relative; overflow: hidden; }
+.pcard .co { font-size: 16px; font-weight: 700; margin: 0; }
+.pcard .role { font-size: 13px; color: var(--cp-text-muted); margin: 2px 0 12px; }
+.stage-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px;
+  background: var(--cp-accent-soft); color: var(--cp-accent);
+  border: 1px solid transparent;
+}
+.stage-badge.flash { animation: flash 1.1s ease; }
+@keyframes flash {
+  0% { background: var(--cp-highlight); box-shadow: 0 0 0 6px var(--cp-highlight); }
+  100% { background: var(--cp-accent-soft); box-shadow: 0 0 0 0 transparent; }
+}
+.pcard .note { font-size: 12.5px; color: var(--cp-text-soft); margin-top: 12px; line-height: 1.5; }
+.pcard .track { display: flex; gap: 4px; margin-top: 14px; }
+.pcard .track .seg { height: 4px; flex: 1; border-radius: 2px; background: var(--cp-border); }
+.pcard .track .seg.on { background: var(--cp-accent); }
+
+/* Assistant */
+.assistant { display: flex; flex-direction: column; min-height: 460px; }
+.chat-log { display: flex; flex-direction: column; gap: 12px; margin-bottom: 14px; }
+.msg { max-width: 92%; padding: 11px 14px; border-radius: 14px; font-size: 14px; line-height: 1.5; }
+.msg.user { align-self: flex-end; background: var(--cp-accent); color: var(--cp-accent-fg); border-bottom-right-radius: 4px; }
+.msg.bot { align-self: flex-start; background: var(--cp-surface-soft); border: 1px solid var(--cp-border); border-bottom-left-radius: 4px; }
+.msg.bot .who { font-size: 11px; font-weight: 700; color: var(--cp-text-soft); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 4px; }
+
+.thinking { display: inline-flex; gap: 4px; align-items: center; }
+.thinking span { width: 6px; height: 6px; border-radius: 50%; background: var(--cp-text-soft); animation: bounce 1s infinite; }
+.thinking span:nth-child(2){ animation-delay: .15s; } .thinking span:nth-child(3){ animation-delay: .3s; }
+@keyframes bounce { 0%,60%,100%{ transform: translateY(0); opacity:.5 } 30%{ transform: translateY(-4px); opacity:1 } }
+
+/* Proposal */
+.proposal { border: 1.5px solid var(--cp-accent); border-radius: 14px; padding: 14px; background: var(--cp-accent-soft); }
+.proposal h4 { margin: 0 0 4px; font-size: 14px; }
+.proposal .summary { font-size: 13px; color: var(--cp-text-muted); margin: 0 0 12px; }
+.action-row {
+  display: flex; align-items: flex-start; gap: 10px; padding: 9px 11px; margin-bottom: 8px;
+  background: var(--cp-surface); border: 1px solid var(--cp-border); border-radius: 10px;
+}
+.action-row.off { opacity: .45; }
+.action-row .ico { font-size: 15px; line-height: 1.4; }
+.action-row .body { flex: 1; min-width: 0; }
+.action-row .kind { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--cp-accent); }
+.action-row .txt { font-size: 13.5px; margin-top: 1px; }
+.action-row input.edit {
+  width: 100%; font-family: inherit; font-size: 13.5px; margin-top: 2px;
+  border: 1px solid var(--cp-border); border-radius: 8px; padding: 5px 8px;
+  background: var(--cp-bg-elevated); color: var(--cp-text);
+}
+.action-row .chk { margin-top: 3px; cursor: pointer; width: 15px; height: 15px; accent-color: var(--cp-accent); }
+.followup-ask { margin: 6px 0 10px; padding: 11px; border: 1px dashed var(--cp-accent); border-radius: 10px; background: var(--cp-surface); }
+.advice-row { background: var(--cp-bg-elevated); }
+.advice-txt { line-height: 1.6; color: var(--cp-text); }
+.followup-ask label { font-size: 12.5px; font-weight: 600; display: block; margin-bottom: 6px; }
+.followup-ask textarea {
+  width: 100%; min-height: 60px; resize: vertical; font-family: inherit; font-size: 13px;
+  border: 1px solid var(--cp-border); border-radius: 8px; padding: 8px; background: var(--cp-bg-elevated); color: var(--cp-text);
+}
+.proposal-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+
+/* Composer */
+.composer { margin-top: auto; }
+.chips { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 9px; }
+.chip {
+  font-size: 12px; padding: 5px 11px; border-radius: 999px; cursor: pointer;
+  border: 1px solid var(--cp-border); background: var(--cp-surface-soft); color: var(--cp-text-muted);
+}
+.chip:hover { border-color: var(--cp-accent); color: var(--cp-accent); }
+.composer-box { display: flex; gap: 8px; align-items: flex-end; }
+.composer-box textarea {
+  flex: 1; min-height: 48px; max-height: 140px; resize: none; font-family: inherit; font-size: 14px;
+  border: 1px solid var(--cp-border); border-radius: 12px; padding: 11px 12px;
+  background: var(--cp-surface); color: var(--cp-text);
+}
+.composer-box textarea:focus { outline: none; border-color: var(--cp-accent); }
+
+/* Tasks */
+.task { display: flex; align-items: flex-start; gap: 9px; padding: 9px 0; border-bottom: 1px solid var(--cp-border); }
+.task:last-child { border-bottom: none; }
+.task input { margin-top: 2px; width: 15px; height: 15px; accent-color: var(--cp-accent); cursor: pointer; }
+.task .t-body { flex: 1; min-width: 0; }
+.task .t-title { font-size: 13.5px; }
+.task.done .t-title { text-decoration: line-through; color: var(--cp-text-soft); }
+.task .t-meta { font-size: 11.5px; color: var(--cp-text-soft); margin-top: 2px; display: flex; gap: 8px; flex-wrap: wrap; }
+.tag { font-size: 10.5px; font-weight: 600; padding: 1px 7px; border-radius: 999px; background: var(--cp-surface-soft); border: 1px solid var(--cp-border); color: var(--cp-text-muted); }
+.tag.new { color: var(--cp-success); border-color: var(--cp-success); }
+
+/* Calendar */
+.cal-item { display: flex; gap: 12px; align-items: center; padding: 11px; border: 1px solid var(--cp-border); border-radius: 12px; background: var(--cp-surface-soft); }
+.cal-date { text-align: center; min-width: 46px; }
+.cal-date .m { font-size: 10.5px; font-weight: 700; text-transform: uppercase; color: var(--cp-accent); letter-spacing: .05em; }
+.cal-date .d { font-size: 20px; font-weight: 700; line-height: 1; }
+.cal-item .c-title { font-size: 13.5px; font-weight: 600; }
+.cal-item .c-time { font-size: 12px; color: var(--cp-text-muted); margin-top: 2px; }
+.cal-item.hi { border-color: var(--cp-accent); box-shadow: 0 0 0 3px var(--cp-highlight); }
+
+.sub { font-size: 12px; color: var(--cp-text-soft); margin-top: 10px; }
+.gap { height: 18px; }
+
+/* Modal */
+.modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: none; place-items: center; z-index: 50; padding: 20px; }
+.modal-bg.open { display: grid; }
+.modal { background: var(--cp-bg-elevated); border: 1px solid var(--cp-border); border-radius: 16px; padding: 22px; max-width: 480px; width: 100%; box-shadow: var(--cp-shadow); }
+.modal h3 { margin: 0 0 6px; font-size: 17px; }
+.modal p { font-size: 13px; color: var(--cp-text-muted); margin: 0 0 14px; }
+.field { margin-bottom: 14px; }
+.field label { font-size: 12.5px; font-weight: 600; display: block; margin-bottom: 6px; }
+.field input, .field select {
+  width: 100%; font-family: inherit; font-size: 14px; padding: 9px 11px;
+  border: 1px solid var(--cp-border); border-radius: 10px; background: var(--cp-surface); color: var(--cp-text);
+}
+.modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 4px; }
+.status-line { font-size: 11.5px; color: var(--cp-text-soft); margin-top: 10px; }
+a { color: var(--cp-link); }
+
+/* Manual editing controls */
+.section-title .spacer { margin-left: auto; }
+.icon-btn {
+  font-family: inherit; font-size: 12px; font-weight: 600; cursor: pointer;
+  border: 1px solid var(--cp-border); background: var(--cp-surface); color: var(--cp-text-muted);
+  border-radius: 8px; padding: 3px 9px; transition: all .12s ease;
+}
+.icon-btn:hover { border-color: var(--cp-accent); color: var(--cp-accent); }
+.pcard-actions { position: absolute; top: 12px; right: 12px; display: flex; gap: 5px; opacity: 0; transition: opacity .12s ease; }
+.pcard:hover .pcard-actions { opacity: 1; }
+.mini {
+  width: 22px; height: 22px; display: grid; place-items: center; padding: 0;
+  border-radius: 6px; border: 1px solid var(--cp-border); background: var(--cp-surface);
+  color: var(--cp-text-soft); cursor: pointer; font-size: 12px; line-height: 1;
+}
+.mini:hover { border-color: var(--cp-accent); color: var(--cp-accent); }
+.mini.del:hover { border-color: var(--cp-danger); color: var(--cp-danger); }
+.task { position: relative; }
+.task .t-actions { display: flex; gap: 5px; opacity: 0; transition: opacity .12s ease; margin-left: auto; }
+.task:hover .t-actions { opacity: 1; }
+.cal-item { position: relative; }
+.cal-item .c-actions { margin-left: auto; display: flex; gap: 5px; opacity: 0; transition: opacity .12s; }
+.cal-item:hover .c-actions { opacity: 1; }
+.pcard .co-name-wrap { display: flex; align-items: baseline; gap: 8px; }
+.stage-select {
+  font-family: inherit; font-size: 12px; font-weight: 600; cursor: pointer;
+  border: 1px solid transparent; border-radius: 999px; padding: 3px 8px;
+  background: var(--cp-accent-soft); color: var(--cp-accent);
+}
+.usage-pill {
+  font-size: 11px; color: var(--cp-text-soft); border: 1px solid var(--cp-border);
+  border-radius: 999px; padding: 4px 10px; background: var(--cp-surface);
+}
+.modal .field textarea {
+  width: 100%; font-family: inherit; font-size: 14px; padding: 9px 11px; min-height: 60px; resize: vertical;
+  border: 1px solid var(--cp-border); border-radius: 10px; background: var(--cp-surface); color: var(--cp-text);
+}
+.jd-hint { font-size: 12px; color: var(--cp-text-soft); margin-top: 6px; font-style: italic; }
+
+/* Month-grid calendar */
+.cal-nav { display: inline-flex; align-items: center; gap: 6px; margin-left: 12px; text-transform: none; letter-spacing: 0; }
+.cal-month-label { font-size: 13px; font-weight: 700; color: var(--cp-text); min-width: 110px; text-align: center; }
+.cal-grid-wrap { display: grid; grid-template-columns: 1fr 260px; gap: 16px; margin-top: 6px; }
+@media (max-width: 820px) { .cal-grid-wrap { grid-template-columns: 1fr; } }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.cal-dow { font-size: 10.5px; font-weight: 700; color: var(--cp-text-soft); text-align: center; padding: 2px 0; text-transform: uppercase; letter-spacing: .04em; }
+.cal-cell {
+  min-height: 68px; border: 1px solid var(--cp-border); border-radius: 8px; padding: 4px 5px;
+  background: var(--cp-surface); cursor: pointer; overflow: hidden; transition: border-color .1s;
+}
+.cal-cell:hover { border-color: var(--cp-border-strong); }
+.cal-cell.empty { background: transparent; border-color: transparent; cursor: default; }
+.cal-cell.today { border-color: var(--cp-accent); box-shadow: inset 0 0 0 1px var(--cp-accent); }
+.cal-cell.selected { background: var(--cp-accent-soft); border-color: var(--cp-accent); }
+.cal-cell .dnum { font-size: 11.5px; font-weight: 600; color: var(--cp-text-muted); }
+.cal-cell.today .dnum { color: var(--cp-accent); }
+.cal-pip { display: block; font-size: 10px; line-height: 1.35; margin-top: 2px; padding: 1px 4px; border-radius: 4px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cal-pip.task { background: var(--cp-accent-soft); color: var(--cp-accent); }
+.cal-pip.event { background: var(--cp-highlight); color: var(--cp-text); border: 1px solid var(--cp-accent); }
+.cal-more { font-size: 9.5px; color: var(--cp-text-soft); margin-top: 1px; }
+.cal-side-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--cp-text-soft); margin-bottom: 8px; }
+.cal-side-item { display: flex; gap: 8px; align-items: flex-start; padding: 7px 0; border-bottom: 1px solid var(--cp-border); font-size: 12.5px; }
+.cal-side-item:last-child { border-bottom: none; }
+.cal-side-item .dot2 { width: 8px; height: 8px; border-radius: 50%; margin-top: 4px; flex: none; }
+.cal-side-item .dot2.task { background: var(--cp-accent); }
+.cal-side-item .dot2.event { background: var(--cp-warning); }
+.cal-side-empty { font-size: 12px; color: var(--cp-text-soft); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="app">
+    <div class="brand">
+      <div class="brand-mark">CS</div>
+      <div>
+        <h1>Job Hunt Chief of Staff</h1>
+        <p>My PM search — pipeline, tasks &amp; scheduling, run by an AI copilot I approve.</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <span class="usage-pill" id="usagePill" title="Live Gemini calls made this session">Live calls: 0</span>
+      <div class="toggle" id="modeToggle" title="Toggle live AI vs. safe mode">
+        <span class="dot"></span><span>Live AI: <strong id="modeLabel">Gemini</strong></span>
+      </div>
+      <button class="btn btn-sm" id="keyBtn">API key</button>
+      <button class="btn btn-sm" id="syncBtn">Sync</button>
+      <button class="btn btn-sm btn-ghost btn-danger" id="resetBtn">Reset</button>
+    </div>
+  </header>
+
+  <!-- Pipeline -->
+  <div class="section-title" style="margin-bottom:10px">Pipeline
+    <span class="spacer"></span>
+    <button class="icon-btn" id="addRoleBtn">+ Add role</button>
+  </div>
+  <div class="pipeline-row" id="pipeline"></div>
+
+  <!-- Main -->
+  <div class="grid-main">
+    <!-- Assistant -->
+    <div class="card assistant">
+      <div class="section-title">Assistant <span class="count">proposes &middot; you approve</span></div>
+      <div class="chat-log" id="chatLog"></div>
+      <div class="composer">
+        <div class="chips" id="chips"></div>
+        <div class="composer-box">
+          <textarea id="composer" placeholder="Type an update, or paste a job description to get a tailored plan…"></textarea>
+          <button class="btn btn-primary" id="sendBtn">Send</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div>
+      <div class="card">
+        <div class="section-title">Tasks <span class="count" id="taskCount">0</span>
+          <span class="spacer"></span>
+          <button class="icon-btn" id="addTaskBtn">+ Add</button>
+        </div>
+        <div id="taskList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Calendar (full width) -->
+  <div class="gap"></div>
+  <div class="card">
+    <div class="section-title">Calendar
+      <span class="cal-nav">
+        <button class="icon-btn" id="calPrev" title="Previous month">&#8249;</button>
+        <span id="calMonthLabel" class="cal-month-label">Month</span>
+        <button class="icon-btn" id="calNext" title="Next month">&#8250;</button>
+        <button class="icon-btn" id="calToday" title="Jump to today">Today</button>
+      </span>
+      <span class="spacer"></span>
+      <button class="icon-btn" id="addEventBtn">+ Add event</button>
+    </div>
+    <div class="cal-grid-wrap">
+      <div class="cal-grid" id="calGrid"></div>
+      <div class="cal-side">
+        <div class="cal-side-title">On <span id="calSelLabel">this day</span></div>
+        <div id="calDayList"></div>
+        <div class="cal-side-title" style="margin-top:14px">Undated / this week</div>
+        <div id="calUndated"></div>
+      </div>
+    </div>
+    <div class="sub" id="calSub">Tasks with a due date and events appear on the grid — saved on this device, works offline.</div>
+  </div>
+</div>
+
+<!-- API key modal -->
+<div class="modal-bg" id="keyModal">
+  <div class="modal">
+    <h3>Live AI — Gemini key</h3>
+    <p>Paste a free Google AI Studio (Gemini) API key to run the assistant live. Leave blank to run in <strong>safe mode</strong> (pre-scripted, never fails). The key stays on this device.</p>
+    <div class="field">
+      <label for="keyInput">Gemini API key</label>
+      <input type="password" id="keyInput" placeholder="AIza…" autocomplete="off" />
+    </div>
+    <div class="field">
+      <label for="modelInput">Model</label>
+      <select id="modelInput">
+        <option value="gemini-2.0-flash">gemini-2.0-flash (recommended)</option>
+        <option value="gemini-2.5-flash">gemini-2.5-flash</option>
+        <option value="gemini-1.5-flash">gemini-1.5-flash</option>
+        <option value="gemini-flash-latest">gemini-flash-latest</option>
+      </select>
+      <div class="jd-hint">If you get a 404, the app auto-tries other models. Free tier is rate-limited — the app trims requests and caches repeats to stretch it.</div>
+    </div>
+    <div class="field">
+      <label for="proxyInput">JD reader URL (optional)</label>
+      <input type="text" id="proxyInput" placeholder="https://jd-reader.YOURNAME.workers.dev" autocomplete="off" />
+      <div class="jd-hint">Lets the app read a job link directly. Deploy the free Cloudflare Worker (jd-reader-worker.js), then paste its URL here. Without it, paste the JD text instead.</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" id="keyCancel">Cancel</button>
+      <button class="btn btn-primary" id="keySave">Save &amp; use live</button>
+    </div>
+    <div class="status-line" id="keyStatus"></div>
+  </div>
+</div>
+
+<!-- Sync modal -->
+<div class="modal-bg" id="syncModal">
+  <div class="modal">
+    <h3>Cloud sync</h3>
+    <p>Sync your pipeline across devices (e.g. laptop &amp; phone) via your own free Cloudflare Worker + KV. Set the same <strong>sync URL</strong> and <strong>sync code</strong> on each device.</p>
+    <div class="field">
+      <label for="syncUrlInput">Sync Worker URL</label>
+      <input type="text" id="syncUrlInput" placeholder="https://jhcos-sync.YOURNAME.workers.dev" autocomplete="off" />
+    </div>
+    <div class="field">
+      <label for="syncCodeInput">Sync code (private passphrase)</label>
+      <input type="text" id="syncCodeInput" placeholder="e.g. anahita-7fq2-purple-otter" autocomplete="off" />
+      <div class="jd-hint">Anyone with this URL + code can read/write your data. Use a long, private code.</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" id="syncCancel">Close</button>
+      <button class="btn" id="syncPull">Pull from cloud</button>
+      <button class="btn btn-primary" id="syncPush">Push to cloud</button>
+    </div>
+    <div class="field" style="margin-top:12px;margin-bottom:0">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="syncAutoInput" style="width:auto" /> Auto-push on every change</label>
+    </div>
+    <div class="status-line" id="syncStatus"></div>
+  </div>
+</div>
+<div class="modal-bg" id="editModal">
+  <div class="modal">
+    <h3 id="editTitle">Edit</h3>
+    <p id="editSubtitle" style="display:none"></p>
+    <div id="editFields"></div>
+    <div class="modal-actions">
+      <button class="btn" id="editCancel">Cancel</button>
+      <button class="btn btn-primary" id="editSave">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+/* ---------- Example data + persistence ---------- */
+const STORAGE_KEY = "jhcos_state_v1";
+function t(){ return "id" + Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+
+function example() {
+  return {
+    profile: { name: "" },
+    companies: [
+      { id:t(), name:"Company X", role:"Senior PM", stage:"Applied",
+        steps:["Lead","Applied","Recruiter screen","Interview","Offer"], stepIdx:1,
+        note:"Application submitted — awaiting response." },
+      { id:t(), name:"Company Y", role:"Target team — PM", stage:"Networking",
+        steps:["Lead","Networking","Referral","Interview","Offer"], stepIdx:1,
+        note:"Referral in play. A contact on a similar team agreed to refer me; follow up in ~1 week. Coffee chat Sep 8." },
+      { id:t(), name:"Company Z", role:"Role of interest", stage:"Researching",
+        steps:["Researching","Networking","Applied","Interview","Offer"], stepIdx:0,
+        note:"Finding people to coffee-chat about the role." },
+    ],
+    tasks: [
+      { id:t(), title:"Prep questions for Company Y coffee chat", due:"Sep 8", company:"Company Y", done:false, isNew:false },
+      { id:t(), title:"Find people at Company Z to reach out to", due:"This week", company:"Company Z", done:false, isNew:false },
+      { id:t(), title:"Nudge Company X (recruiter) if no reply", due:"Sep 2", company:"Company X", done:false, isNew:false },
+    ],
+    calendar: [
+      { id:t(), title:"Coffee chat — Company Y contact", month:"SEP", day:"8", time:"6:30 PM", hi:false },
+    ],
+  };
+}
+function emptyState(name){ return { profile:{ name:name||"" }, companies:[], tasks:[], calendar:[] }; }
+
+function saveState(){
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e){}
+  if (typeof cfg !== "undefined" && cfg.syncAuto && cfg.syncUrl && cfg.syncCode) {
+    clearTimeout(saveState._t);
+    saveState._t = setTimeout(()=>{ syncPush(true); }, 1200);
+  }
+}
+function loadState(){
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const s = JSON.parse(raw);
+    if (!s || !Array.isArray(s.companies)) return null;
+    s.profile = s.profile || { name:"" };
+    s.tasks = s.tasks || []; s.calendar = s.calendar || [];
+    return s;
+  } catch(e){ return null; }
+}
+let state = loadState() || example();
+
+/* ---------- Config + usage ---------- */
+const cfg = {
+  apiKey: (function(){ try { return localStorage.getItem("jhcos_key") || ""; } catch(e){ return ""; } })(),
+  model: (function(){ try { return localStorage.getItem("jhcos_model") || "gemini-2.0-flash"; } catch(e){ return "gemini-2.0-flash"; } })(),
+  proxyUrl: (function(){ try { return localStorage.getItem("jhcos_proxy") || ""; } catch(e){ return ""; } })(),
+  syncUrl: (function(){ try { return localStorage.getItem("jhcos_sync_url") || ""; } catch(e){ return ""; } })(),
+  syncCode: (function(){ try { return localStorage.getItem("jhcos_sync_code") || ""; } catch(e){ return ""; } })(),
+  syncAuto: (function(){ try { return localStorage.getItem("jhcos_sync_auto") === "1"; } catch(e){ return false; } })(),
+  forceSafe: false,
+};
+const MODEL_FALLBACKS = ["gemini-2.0-flash","gemini-flash-latest","gemini-1.5-flash","gemini-2.5-flash"];
+const planCache = {};
+const convo = []; // rolling conversation memory: {role:"user"|"assistant", text}
+const CONVO_TURNS = 5;
+function pushConvo(role, text){
+  convo.push({ role, text: String(text).slice(0, 500) });
+  while (convo.length > CONVO_TURNS * 2) convo.shift();
+}
+
+function usageGet(){
+  try {
+    const raw = localStorage.getItem("jhcos_usage");
+    const today = new Date().toDateString();
+    if (!raw) return { date:today, count:0 };
+    const u = JSON.parse(raw);
+    if (u.date !== today) return { date:today, count:0 };
+    return u;
+  } catch(e){ return { date:new Date().toDateString(), count:0 }; }
+}
+function usageBump(){
+  const u = usageGet(); u.count++;
+  try { localStorage.setItem("jhcos_usage", JSON.stringify(u)); } catch(e){}
+  renderUsage();
+}
+function renderUsage(){
+  const u = usageGet();
+  const el = $("usagePill");
+  if (el) el.textContent = "Live calls today: " + u.count;
+}
+
+/* ---------- Render ---------- */
+const $ = (id) => document.getElementById(id);
+
+function renderPipeline() {
+  $("pipeline").innerHTML = state.companies.map(c => {
+    const segs = c.steps.map((s,i) => `<div class="seg ${i<=c.stepIdx?"on":""}"></div>`).join("");
+    const opts = c.steps.map((s,i)=>`<option value="${i}" ${i===c.stepIdx?"selected":""}>${esc(s)}</option>`).join("");
+    return `<div class="card pcard" data-co="${c.id}">
+      <div class="pcard-actions">
+        <button class="mini" data-edit-co="${c.id}" title="Edit">&#9998;</button>
+        <button class="mini del" data-del-co="${c.id}" title="Delete">&#215;</button>
+      </div>
+      <p class="co">${esc(c.name)}</p>
+      <p class="role">${esc(c.role)}</p>
+      <select class="stage-select" data-stage-co="${c.id}">${opts}</select>
+      <div class="track">${segs}</div>
+      <p class="note">${esc(c.note)}</p>
+    </div>`;
+  }).join("") || `<div class="sub" style="grid-column:1/-1">No roles yet — click <strong>+ Add role</strong> to start your pipeline.</div>`;
+
+  document.querySelectorAll("[data-stage-co]").forEach(sel=>{
+    sel.onchange = () => {
+      const co = state.companies.find(c=>c.id===sel.dataset.stageCo);
+      if (co) { co.stepIdx = +sel.value; co.stage = co.steps[co.stepIdx]; saveState(); renderPipeline(); }
+    };
+  });
+  document.querySelectorAll("[data-edit-co]").forEach(b=>{ b.onclick = ()=>editCompany(b.dataset.editCo); });
+  document.querySelectorAll("[data-del-co]").forEach(b=>{ b.onclick = ()=>deleteCompany(b.dataset.delCo); });
+}
+
+function renderTasks() {
+  const open = state.tasks.filter(x=>!x.done).length;
+  $("taskCount").textContent = open + " open";
+  $("taskList").innerHTML = state.tasks.map(tk => `
+    <div class="task ${tk.done?"done":""}">
+      <input type="checkbox" ${tk.done?"checked":""} data-task="${tk.id}" />
+      <div class="t-body">
+        <div class="t-title">${esc(tk.title)}</div>
+        <div class="t-meta">
+          <span class="tag ${tk.isNew?"new":""}">${/^[XYZ]$/.test(String(tk.company))?("Company "+tk.company):esc(tk.company||"General")}</span>
+          ${tk.due?`<span>Due ${esc(tk.due)}</span>`:""}
+          ${tk.isNew?`<span style="color:var(--cp-success)">just added</span>`:""}
+        </div>
+      </div>
+      <div class="t-actions">
+        <button class="mini" data-edit-task="${tk.id}" title="Edit">&#9998;</button>
+        <button class="mini del" data-del-task="${tk.id}" title="Delete">&#215;</button>
+      </div>
+    </div>`).join("") || `<div class="sub">No tasks yet.</div>`;
+  document.querySelectorAll("[data-task]").forEach(el => {
+    el.onchange = () => {
+      const tk = state.tasks.find(x=>x.id===el.dataset.task);
+      if (tk) { tk.done = el.checked; saveState(); renderTasks(); }
+    };
+  });
+  document.querySelectorAll("[data-edit-task]").forEach(b=>{ b.onclick = ()=>editTask(b.dataset.editTask); });
+  document.querySelectorAll("[data-del-task]").forEach(b=>{ b.onclick = ()=>{ state.tasks = state.tasks.filter(x=>x.id!==b.dataset.delTask); saveState(); renderTasks(); }; });
+}
+
+/* ---------- Calendar: date parsing + month grid ---------- */
+const MONTHS = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+const MONTH_FULL = { january:0,february:1,march:2,april:3,may:4,june:5,july:6,august:7,september:8,october:9,november:10,december:11 };
+const DOW = { sunday:0,monday:1,tuesday:2,wednesday:3,thursday:4,friday:5,saturday:6 };
+let calView = new Date(); calView.setDate(1);
+let calSelected = null; // Date or null
+
+function today0(){ const d = new Date(); d.setHours(0,0,0,0); return d; }
+function sameDay(a,b){ return a && b && a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate(); }
+function ymd(d){ return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate(); }
+
+// Parse a fuzzy due/date string into a real Date, or null if undatable.
+function parseDate(str){
+  if (!str) return null;
+  const s = String(str).trim().toLowerCase();
+  const base = today0();
+  // ISO 2026-09-08
+  let m = s.match(/(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (m) return new Date(+m[1], +m[2]-1, +m[3]);
+  // 9/8 or 09/08
+  m = s.match(/^(\d{1,2})\/(\d{1,2})$/);
+  if (m) { const d = new Date(base.getFullYear(), +m[1]-1, +m[2]); return d; }
+  // "sep 8" / "september 8"
+  m = s.match(/([a-z]{3,9})\.?\s+(\d{1,2})/);
+  if (m) {
+    let mi = MONTHS.indexOf(m[1].slice(0,3).toUpperCase());
+    if (mi < 0 && MONTH_FULL[m[1]] !== undefined) mi = MONTH_FULL[m[1]];
+    if (mi >= 0) {
+      let yr = base.getFullYear();
+      const d = new Date(yr, mi, +m[2]);
+      if (d < base && (base - d) > 86400000*180) d.setFullYear(yr+1); // roll forward if long past
+      return d;
+    }
+  }
+  if (s === "today") return base;
+  if (s === "tomorrow") { const d = new Date(base); d.setDate(d.getDate()+1); return d; }
+  // weekday name -> next occurrence
+  for (const name in DOW) {
+    if (s === name || s.startsWith(name)) {
+      const d = new Date(base); const diff = (DOW[name] - d.getDay() + 7) % 7 || 7; d.setDate(d.getDate()+diff); return d;
+    }
+  }
+  return null; // "this week", "next week", "eod", etc.
+}
+function eventDate(ev){
+  const mi = MONTHS.indexOf(String(ev.month||"").toUpperCase().slice(0,3));
+  const day = parseInt(ev.day,10);
+  if (mi >= 0 && day) { const d = new Date(today0().getFullYear(), mi, day); if (d < today0() && (today0()-d)>86400000*180) d.setFullYear(d.getFullYear()+1); return d; }
+  return null;
+}
+
+function calItemsOn(date){
+  const items = [];
+  state.tasks.forEach(tk=>{ if (!tk.done){ const d = parseDate(tk.due); if (d && sameDay(d,date)) items.push({ kind:"task", title:tk.title }); } });
+  state.calendar.forEach(ev=>{ const d = eventDate(ev); if (d && sameDay(d,date)) items.push({ kind:"event", title:ev.title + (ev.time?(" · "+ev.time):"") }); });
+  return items;
+}
+
+function renderCalendar() {
+  const grid = $("calGrid"); if (!grid) return;
+  const year = calView.getFullYear(), month = calView.getMonth();
+  $("calMonthLabel").textContent = calView.toLocaleDateString("en-US",{ month:"long", year:"numeric" });
+  const first = new Date(year, month, 1);
+  const startDow = first.getDay();
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const tdy = today0();
+
+  let html = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map(d=>`<div class="cal-dow">${d}</div>`).join("");
+  for (let i=0;i<startDow;i++) html += `<div class="cal-cell empty"></div>`;
+  for (let day=1; day<=daysInMonth; day++){
+    const cellDate = new Date(year, month, day);
+    const items = calItemsOn(cellDate);
+    const cls = ["cal-cell"];
+    if (sameDay(cellDate, tdy)) cls.push("today");
+    if (calSelected && sameDay(cellDate, calSelected)) cls.push("selected");
+    let pips = items.slice(0,2).map(it=>`<span class="cal-pip ${it.kind}">${esc(it.title.length>16?it.title.slice(0,16)+"…":it.title)}</span>`).join("");
+    if (items.length>2) pips += `<div class="cal-more">+${items.length-2} more</div>`;
+    html += `<div class="${cls.join(" ")}" data-cal-day="${ymd(cellDate)}"><div class="dnum">${day}</div>${pips}</div>`;
+  }
+  grid.innerHTML = html;
+  grid.querySelectorAll("[data-cal-day]").forEach(cell=>{
+    cell.onclick = () => { const p = cell.dataset.calDay.split("-"); calSelected = new Date(+p[0],+p[1]-1,+p[2]); renderCalendar(); };
+  });
+
+  // Selected-day side panel
+  const sel = calSelected || tdy;
+  $("calSelLabel").textContent = sel.toLocaleDateString("en-US",{ weekday:"short", month:"short", day:"numeric" });
+  const dayItems = calItemsOn(sel);
+  $("calDayList").innerHTML = dayItems.length
+    ? dayItems.map(it=>`<div class="cal-side-item"><span class="dot2 ${it.kind}"></span><span>${esc(it.title)}</span></div>`).join("")
+    : `<div class="cal-side-empty">Nothing scheduled.</div>`;
+
+  // Undated / fuzzy tasks
+  const undated = state.tasks.filter(tk=>!tk.done && !parseDate(tk.due));
+  $("calUndated").innerHTML = undated.length
+    ? undated.map(tk=>`<div class="cal-side-item"><span class="dot2 task"></span><span>${esc(tk.title)}${tk.due?` <span style="color:var(--cp-text-soft)">(${esc(tk.due)})</span>`:""}</span></div>`).join("")
+    : `<div class="cal-side-empty">None.</div>`;
+}
+
+function renderMode() {
+  const tog = $("modeToggle");
+  const live = !!cfg.apiKey && !cfg.forceSafe;
+  tog.classList.toggle("safe", !live);
+  $("modeLabel").textContent = live ? "Gemini" : "Safe mode";
+}
+
+function renderChips() {
+  const chips = [
+    "Paste a job description here and I'll build a tailored plan…",
+    "Had a great coffee chat — they're into AI, agreed to refer me, follow up in a week.",
+    "Recruiter hasn't replied since I applied.",
+  ];
+  $("chips").innerHTML = chips.map((c,i)=>`<span class="chip" data-chip="${i}">${esc(c.length>46?c.slice(0,46)+"…":c)}</span>`).join("");
+  document.querySelectorAll("[data-chip]").forEach(el=>{
+    el.onclick = () => { $("composer").value = chips[+el.dataset.chip].replace(/…$/,""); $("composer").focus(); };
+  });
+}
+
+function esc(s){ return String(s).replace(/[&<>"']/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m])); }
+
+/* ---------- Generic edit modal ---------- */
+let editOnSave = null;
+function openEdit(title, fields, onSave, subtitle){
+  $("editTitle").textContent = title;
+  const sub = $("editSubtitle");
+  if (subtitle) { sub.textContent = subtitle; sub.style.display = "block"; } else { sub.style.display = "none"; }
+  $("editFields").innerHTML = fields.map(f => {
+    if (f.type === "select") {
+      const opts = f.options.map(o=>`<option value="${esc(o)}" ${o===f.value?"selected":""}>${esc(o)}</option>`).join("");
+      return `<div class="field"><label>${esc(f.label)}</label><select data-f="${f.key}">${opts}</select></div>`;
+    }
+    if (f.type === "textarea") {
+      return `<div class="field"><label>${esc(f.label)}</label><textarea data-f="${f.key}">${esc(f.value||"")}</textarea></div>`;
+    }
+    return `<div class="field"><label>${esc(f.label)}</label><input data-f="${f.key}" value="${esc(f.value||"")}" placeholder="${esc(f.placeholder||"")}" /></div>`;
+  }).join("");
+  editOnSave = () => {
+    const vals = {};
+    $("editFields").querySelectorAll("[data-f]").forEach(el=>{ vals[el.dataset.f] = el.value.trim(); });
+    onSave(vals);
+  };
+  $("editModal").classList.add("open");
+  const first = $("editFields").querySelector("[data-f]"); if (first) first.focus();
+}
+function closeEdit(){ $("editModal").classList.remove("open"); editOnSave = null; }
+
+/* ---------- Manual CRUD ---------- */
+const DEFAULT_STEPS = ["Interested","Researching","Applied","Interview","Offer"];
+function addCompany(){
+  openEdit("Add role", [
+    { key:"name", label:"Company / label", placeholder:"e.g. Company A or Acme" },
+    { key:"role", label:"Role title", placeholder:"e.g. Senior PM" },
+    { key:"stage", label:"Stage", type:"select", options:DEFAULT_STEPS, value:"Interested" },
+    { key:"note", label:"Notes", type:"textarea", value:"" },
+  ], v=>{
+    if (!v.name) return;
+    const idx = DEFAULT_STEPS.indexOf(v.stage);
+    state.companies.push({ id:t(), name:v.name, role:v.role||v.name, stage:v.stage, steps:DEFAULT_STEPS.slice(), stepIdx: idx<0?0:idx, note:v.note||"" });
+    saveState(); renderPipeline(); closeEdit();
+  });
+}
+function editCompany(id){
+  const c = state.companies.find(x=>x.id===id); if (!c) return;
+  openEdit("Edit role", [
+    { key:"name", label:"Company / label", value:c.name },
+    { key:"role", label:"Role title", value:c.role },
+    { key:"stage", label:"Stage", type:"select", options:c.steps, value:c.stage },
+    { key:"note", label:"Notes", type:"textarea", value:c.note },
+  ], v=>{
+    c.name = v.name || c.name; c.role = v.role || c.role; c.note = v.note;
+    const idx = c.steps.indexOf(v.stage); if (idx>=0){ c.stepIdx = idx; c.stage = v.stage; }
+    saveState(); renderPipeline(); closeEdit();
+  });
+}
+function deleteCompany(id){
+  const c = state.companies.find(x=>x.id===id); if (!c) return;
+  if (confirm(`Remove "${c.name}" from your pipeline?`)) { state.companies = state.companies.filter(x=>x.id!==id); saveState(); renderPipeline(); }
+}
+function companyNames(){ return state.companies.map(c=>c.name); }
+function addTask(){
+  const names = companyNames();
+  openEdit("Add task", [
+    { key:"title", label:"Task", placeholder:"What needs doing?" },
+    { key:"company", label:"Related role", type:"select", options:["General"].concat(names), value: names[0]||"General" },
+    { key:"due", label:"Due (optional)", placeholder:"e.g. This week, Sep 8" },
+  ], v=>{
+    if (!v.title) return;
+    state.tasks.unshift({ id:t(), title:v.title, company:v.company==="General"?"":v.company, due:v.due||"", done:false, isNew:false });
+    saveState(); renderTasks(); closeEdit();
+  });
+}
+function editTask(id){
+  const tk = state.tasks.find(x=>x.id===id); if (!tk) return;
+  const names = companyNames();
+  openEdit("Edit task", [
+    { key:"title", label:"Task", value:tk.title },
+    { key:"company", label:"Related role", type:"select", options:["General"].concat(names), value: tk.company||"General" },
+    { key:"due", label:"Due (optional)", value:tk.due },
+  ], v=>{
+    tk.title = v.title || tk.title; tk.company = v.company==="General"?"":v.company; tk.due = v.due; tk.isNew=false;
+    saveState(); renderTasks(); closeEdit();
+  });
+}
+function addEvent(){
+  openEdit("Add calendar event", [
+    { key:"title", label:"Event", placeholder:"e.g. Coffee chat — Alex" },
+    { key:"month", label:"Month", placeholder:"e.g. SEP" },
+    { key:"day", label:"Day", placeholder:"e.g. 8" },
+    { key:"time", label:"Time", placeholder:"e.g. 6:30 PM" },
+  ], v=>{
+    if (!v.title) return;
+    state.calendar.push({ id:t(), title:v.title, month:(v.month||"").toUpperCase().slice(0,4), day:v.day||"", time:v.time||"", hi:false });
+    saveState(); renderCalendar(); closeEdit();
+  });
+}
+function editEvent(id){
+  const ev = state.calendar.find(x=>x.id===id); if (!ev) return;
+  openEdit("Edit event", [
+    { key:"title", label:"Event", value:ev.title },
+    { key:"month", label:"Month", value:ev.month },
+    { key:"day", label:"Day", value:ev.day },
+    { key:"time", label:"Time", value:ev.time },
+  ], v=>{
+    ev.title=v.title||ev.title; ev.month=(v.month||ev.month).toUpperCase().slice(0,4); ev.day=v.day||ev.day; ev.time=v.time||ev.time;
+    saveState(); renderCalendar(); closeEdit();
+  });
+}
+function askName(isFirstRun){
+  openEdit(isFirstRun?"Welcome — set up your Chief of Staff":"Your name", [
+    { key:"name", label:"What should I call you?", value: state.profile.name||"", placeholder:"Your first name" },
+  ], v=>{
+    state.profile.name = v.name || "there";
+    saveState(); closeEdit();
+    if (isFirstRun) {
+      $("chatLog").innerHTML = "";
+      greet();
+    }
+  }, isFirstRun ? "Your data stays on this device (browser storage). Bring your own free Gemini key for live AI." : "");
+}
+
+/* ---------- Chat helpers ---------- */
+function addUserMsg(text){
+  const d = document.createElement("div");
+  d.className = "msg user"; d.textContent = text;
+  $("chatLog").appendChild(d); scrollChat();
+}
+function addBotMsg(html){
+  const d = document.createElement("div");
+  d.className = "msg bot";
+  d.innerHTML = `<div class="who">Chief of Staff</div>${html}`;
+  $("chatLog").appendChild(d); scrollChat(); return d;
+}
+function addThinking(){
+  const d = document.createElement("div");
+  d.className = "msg bot";
+  d.innerHTML = `<div class="who">Chief of Staff</div><div class="thinking"><span></span><span></span><span></span></div>`;
+  $("chatLog").appendChild(d); scrollChat(); return d;
+}
+function scrollChat(){ const l=$("chatLog"); l.scrollTop = l.scrollHeight; window.scrollTo(0, document.body.scrollHeight); }
+
+/* ---------- Cloud sync (optional Worker + KV) ---------- */
+function syncEndpoint(){
+  const base = cfg.syncUrl.replace(/\/+$/,"");
+  return base + "/?code=" + encodeURIComponent(cfg.syncCode);
+}
+async function syncPush(silent){
+  if (!cfg.syncUrl || !cfg.syncCode) { if(!silent) setSyncStatus("Set a sync URL and code first.", true); return; }
+  try {
+    const res = await fetch(syncEndpoint(), {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ state, savedAt: Date.now() }),
+    });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    if (!silent) setSyncStatus("✓ Pushed to cloud just now.");
+  } catch(e){ if(!silent) setSyncStatus("Push failed: " + (e.message||"error"), true); }
+}
+async function syncPull(){
+  if (!cfg.syncUrl || !cfg.syncCode) { setSyncStatus("Set a sync URL and code first.", true); return; }
+  try {
+    const res = await fetch(syncEndpoint());
+    if (res.status === 404) { setSyncStatus("Nothing saved in the cloud yet — push first.", true); return; }
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const data = await res.json();
+    if (!data || !data.state || !Array.isArray(data.state.companies)) throw new Error("no valid data");
+    if (!confirm("Replace this device's data with the cloud copy?")) return;
+    state = data.state;
+    state.profile = state.profile || { name:"" };
+    state.tasks = state.tasks || []; state.calendar = state.calendar || [];
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    renderPipeline(); renderTasks(); renderCalendar();
+    setSyncStatus("✓ Pulled from cloud.");
+  } catch(e){ setSyncStatus("Pull failed: " + (e.message||"error"), true); }
+}
+function setSyncStatus(msg, isErr){
+  const el = $("syncStatus");
+  el.textContent = msg;
+  el.style.color = isErr ? "var(--cp-danger)" : "var(--cp-success)";
+}
+
+/* ---------- JD reader (optional proxy) ---------- */
+function findUrl(text){
+  const m = text.match(/https?:\/\/[^\s]+/i);
+  return m ? m[0] : "";
+}
+function isBareUrl(text){
+  const trimmed = text.trim();
+  const u = findUrl(trimmed);
+  // Treat as a link to fetch when the message is mostly just a URL (short + contains one)
+  return !!u && trimmed.length < u.length + 40;
+}
+async function fetchJD(pageUrl){
+  const base = cfg.proxyUrl.replace(/\/+$/,"");
+  const url = base + "/?url=" + encodeURIComponent(pageUrl);
+  const ctrl = new AbortController();
+  const timer = setTimeout(()=>ctrl.abort(), 15000);
+  try {
+    const res = await fetch(url, { signal: ctrl.signal });
+    clearTimeout(timer);
+    if (!res.ok) throw new Error("reader HTTP " + res.status);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    if (!data.text || data.text.length < 80) throw new Error("page had little readable text");
+    return (data.title ? data.title + "\n\n" : "") + data.text;
+  } catch(e){ clearTimeout(timer); throw e; }
+}
+
+/* ---------- Gemini ---------- */
+function looksLikeJD(text){
+  return text.length > 400 || /responsibilities|qualifications|what you.?ll do|minimum qualifications|requirements|about the role|you will/i.test(text);
+}
+function buildPrompt(userText){
+  const names = state.companies.map(c=>`${c.name} (${c.stage})`).join(", ") || "none yet";
+  const openTasks = state.tasks.filter(t=>!t.done).slice(0,8).map(t=>`"${t.title}"${t.due?" (due "+t.due+")":""}`).join(", ") || "none";
+  const jd = looksLikeJD(userText);
+  const today = new Date().toLocaleDateString("en-US", { weekday:"long", month:"long", day:"numeric", year:"numeric" });
+  const history = convo.length
+    ? "Recent conversation (oldest first), for resolving follow-ups like \"make that Friday\":\n" +
+      convo.map(m=>`${m.role === "user" ? "User" : "You"}: ${m.text}`).join("\n") + "\n\n"
+    : "";
+  return `You are "Chief of Staff", an AI copilot running a product manager's job search. Today is ${today}. You PROPOSE plans; you never act on your own.
+Existing pipeline: ${names}.
+Current open tasks: ${openTasks}.
+${history}${jd ? "The user pasted a JOB DESCRIPTION. Read it, extract the real role title, and tailor everything to its actual requirements." : "The user sent a short message. If it refers to something earlier (e.g. \"make that Friday\", \"add one more\", \"change the second task\"), use the recent conversation and current tasks to figure out what they mean and propose the specific edit."}
+User input:
+"""${userText.slice(0, jd ? 4000 : 800)}"""
+
+Return ONLY JSON (no fences):
+{"reply":"one short sentence","company":"existing name | new role name | null","actions":[...]}
+Action types:
+- {"type":"add_company","name":"<short label>","role":"<title>","stage":"Interested","text":"..."} — when a NEW role/JD/link is introduced.
+- {"type":"advice","text":"How I'd approach this:\\n1) ...\\n2) ..."} — 3-5 concrete, tailored numbered steps referencing the user's PM/eng background and THIS role's real requirements. Never generic, never an echo.
+- {"type":"task","company":"<role name>","due":"e.g. This week","text":"..."} — a NEW checkable task.
+- {"type":"update_task","match":"<words from the existing task's text>","due":"<new due, optional>","text":"<new title, optional>"} — to EDIT an existing task (use for "make that Friday", "rename the second task").
+- {"type":"remove_task","match":"<words from the existing task's text>","text":"Remove '<task>'"} — to delete an existing task.
+- {"type":"stage","company":"<existing name>","to":"<stage>","text":"..."} — only if clear progress on an EXISTING item.
+- {"type":"calendar","title":"<event>","month":"SEP","day":"8","time":"6:30 PM","text":"..."} — to add a dated meeting/event the user mentions.
+- {"type":"followup_ask","text":"..."} — when a follow-up MESSAGE to a person is implied; ask the user what to say, do not write it.
+Rules: if a JD/new role is present, start with add_company then advice then tasks pulled from the JD. For a follow-up tweak, return only the specific update_task/remove_task/calendar/stage action needed. 3-6 actions max. JSON only.`;
+}
+
+async function callGemini(userText){
+  const models = [cfg.model].concat(MODEL_FALLBACKS.filter(m=>m!==cfg.model));
+  let lastErr = new Error("unknown");
+  for (const model of models) {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(cfg.apiKey)}`;
+    const ctrl = new AbortController();
+    const timer = setTimeout(()=>ctrl.abort(), 15000);
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        signal: ctrl.signal,
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: buildPrompt(userText) }] }],
+          generationConfig: { temperature: 0.4, responseMimeType: "application/json", maxOutputTokens: 900 }
+        })
+      });
+      clearTimeout(timer);
+      if (res.status === 404) { lastErr = new Error("API 404 (model not found)"); continue; } // try next model
+      if (res.status === 429) { throw new Error("429 rate limit — free quota reached"); }
+      if (!res.ok) throw new Error("API " + res.status);
+      const data = await res.json();
+      const txt = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!txt) throw new Error("empty response");
+      const clean = txt.replace(/^```json\s*/i,"").replace(/```\s*$/,"").trim();
+      const plan = JSON.parse(clean);
+      if (!plan.actions || !Array.isArray(plan.actions)) throw new Error("bad shape");
+      if (model !== cfg.model) { cfg.model = model; try { localStorage.setItem("jhcos_model", model); } catch(e){} } // remember working model
+      return { plan, live:true };
+    } catch(e) {
+      clearTimeout(timer);
+      lastErr = e;
+      if (String(e.message).indexOf("404") === -1) throw e; // only keep looping on 404s
+    }
+  }
+  throw lastErr;
+}
+
+/* ---------- Safe mode (scripted, JD-aware) ---------- */
+function extractTitle(text){
+  const m = text.match(/chief of staff|senior product manager|principal product manager|group product manager|product manager|program manager|senior pm|principal pm|group pm|director of product|product lead|product owner/i);
+  if (m) return m[0].replace(/\b\w/g, c=>c.toUpperCase());
+  const first = (text.split(/\n/)[0]||"").trim();
+  if (first && first.length <= 60) return first;
+  return "New role";
+}
+function safePlan(userText){
+  const s = userText.toLowerCase();
+  const isJD = looksLikeJD(userText);
+  const hasLink = /https?:\/\/|careers|apply|\bjob\b|\bposition\b|opening/.test(s);
+  const wantsApproach = /approach|how (do|should|would)|suggest|strategy|prepare|prep|tips|advice|go about/.test(s);
+
+  // Follow-up tweak (uses conversation memory) — e.g. "make that Friday", "change the due date"
+  const dueMatch = s.match(/\b(today|tomorrow|monday|tuesday|wednesday|thursday|friday|saturday|sunday|next week|this week|end of week|eod|sep \d+|oct \d+|\d{1,2}\/\d{1,2})\b/);
+  const isTweak = !isJD && convo.length > 2 && userText.length < 120 &&
+    /\b(make (that|it)|change|move|reschedule|set (it|that)|due|instead|rename|update|remove|delete|drop)\b/.test(s);
+  if (isTweak) {
+    const lastTask = state.tasks.find(x=>!x.done);
+    if (/remove|delete|drop/.test(s) && lastTask) {
+      return { reply:`Okay — I'll remove "${lastTask.title.slice(0,40)}".`, company:null,
+        actions:[{ type:"remove_task", match:lastTask.title.slice(0,20).toLowerCase(), text:`Remove "${lastTask.title.slice(0,40)}"` }] };
+    }
+    if (lastTask) {
+      const newDue = dueMatch ? dueMatch[0].replace(/\b\w/g,c=>c.toUpperCase()) : lastTask.due;
+      return { reply:`Got it — updating "${lastTask.title.slice(0,40)}"${dueMatch?` to ${newDue}`:""}.`, company:null,
+        actions:[{ type:"update_task", match:lastTask.title.slice(0,20).toLowerCase(), due:newDue, text:lastTask.title }] };
+    }
+  }
+
+  if (isJD || hasLink || wantsApproach) {
+    const label = extractTitle(userText);
+    // Light "reading" of the JD: pull themes to tailor tasks
+    const themeTasks = [];
+    if (/\bapi|platform|developer|integration|services/.test(s)) themeTasks.push("Map my API/platform work (AWS CI/CD pipelines, Salesforce) to their platform needs");
+    if (/identity|auth|access|security|iam/.test(s)) themeTasks.push("Prep my passwordless-IAM / identity story for their access-management asks");
+    if (/\bai\b|ml|genai|copilot|llm/.test(s)) themeTasks.push("Prepare 1-2 examples of shipping/using AI tools (they value AI fluency)");
+    if (/health|clinical|patient|care|ehr/.test(s)) themeTasks.push("Read up on their healthcare domain + one recent product move");
+    if (/payment|banking|fintech|financial/.test(s)) themeTasks.push("Frame my CIBC payments/core-banking work against their fintech context");
+    const baseTasks = [
+      "Read the JD twice and list the 4-5 outcomes the role must deliver",
+      "Map 2-3 of my strongest PM/eng wins to those outcomes",
+      "Find a 2nd-degree connection for a warm intro / referral",
+    ];
+    const tasks = baseTasks.concat(themeTasks).slice(0,5).map(txt=>({ type:"task", company:label, due:"This week", text:txt }));
+    return {
+      reply: isJD ? `Read it — here's a tailored plan of attack for the ${label} role.` : `Let's build a real plan of attack for the ${label} role.`,
+      company: label,
+      actions: [
+        { type:"add_company", name:label, role:label, stage:"Interested", text:`Add "${label}" to your pipeline (Interested)` },
+        { type:"advice", text:
+          `How I'd approach this:\n`+
+          `1) Decode the role — list the 4-5 outcomes it's really hired to deliver.\n`+
+          `2) Map your proof — pick 2-3 of your strongest wins (CIBC payments/data platform, AWS CI/CD pipelines, Salesforce passwordless IAM) that match.\n`+
+          `3) Warm intro first — find a 2nd-degree connection and aim for a referral before applying cold.\n`+
+          `4) Tailor, don't spray — rewrite your resume summary + top bullets in the role's own language.\n`+
+          `5) Prep the narrative — draft 3 STAR stories tied to the top outcomes.` },
+        ...tasks,
+        { type:"followup_ask", text:"Want to draft the intro/referral message now? Type it and I'll save it as a task." },
+      ],
+    };
+  }
+
+  if (s.includes("coffee") || s.includes("refer")) {
+    return {
+      reply: "Got it — that coffee chat went well and a referral is on the table.",
+      company: null,
+      actions: [
+        { type:"task", company:"", due:"~1 week", text:"Send the follow-up (they asked to hear back in about a week)" },
+        { type:"task", company:"", due:"This week", text:"Note their interests so the follow-up feels personal" },
+        { type:"followup_ask", text:"What would you like to say in the follow-up?" },
+      ],
+    };
+  }
+  if (s.includes("recruiter") || s.includes("applied") || s.includes("no reply") || s.includes("nudge")) {
+    return {
+      reply: "Understood — that application has gone quiet.",
+      company: null,
+      actions: [
+        { type:"task", company:"", due:"This week", text:"Send a brief, warm nudge to the recruiter" },
+        { type:"followup_ask", text:"What would you like your nudge note to say?" },
+      ],
+    };
+  }
+  return {
+    reply: "Here's how I'd turn that into next steps.",
+    company: null,
+    actions: [
+      { type:"advice", text:"I'd (1) capture this against the right role, (2) decide the single next action, and (3) set a due date so it doesn't slip." },
+      { type:"task", company:"", due:"This week", text: userText.length>70 ? userText.slice(0,70)+"…" : userText },
+    ],
+  };
+}
+
+/* ---------- Proposal UI ---------- */
+let proposalSeq = 0;
+function renderProposal(plan, container){
+  const pid = "p" + (proposalSeq++);
+  const rows = plan.actions.map((a,i)=>{
+    const ico = { stage:"&#9654;", task:"&#9744;", calendar:"&#128197;", followup_ask:"&#9997;", add_company:"&#10133;", advice:"&#128161;", update_task:"&#9998;", remove_task:"&#128465;" }[a.type] || "&#8226;";
+    const kind = { stage:"Update stage", task:"Add task", calendar:"Calendar", followup_ask:"Ask me", add_company:"Add to pipeline", advice:"How to approach", update_task:"Edit task", remove_task:"Remove task" }[a.type] || "Action";
+    if (a.type === "followup_ask") {
+      return `<div class="followup-ask" data-i="${i}">
+        <label>${esc(a.text)}</label>
+        <textarea data-followup="${i}" placeholder="Type your follow-up in your own words — I'll save it as a task, I won't send anything."></textarea>
+      </div>`;
+    }
+    if (a.type === "advice") {
+      return `<div class="action-row advice-row" data-i="${i}">
+        <span class="ico">${ico}</span>
+        <div class="body">
+          <div class="kind">${kind}</div>
+          <div class="txt advice-txt">${esc(a.text).replace(/\n/g,"<br>")}</div>
+        </div>
+      </div>`;
+    }
+    return `<div class="action-row" data-i="${i}">
+      <input type="checkbox" class="chk" data-chk="${i}" checked />
+      <span class="ico">${ico}</span>
+      <div class="body">
+        <div class="kind">${kind}</div>
+        <div class="txt"><span class="txt-view" data-view="${i}">${esc(a.text)}</span></div>
+      </div>
+    </div>`;
+  }).join("");
+
+  container.innerHTML = `<div class="who">Chief of Staff</div>
+    <div style="margin-bottom:10px">${esc(plan.reply || "Here's my proposed plan:")}</div>
+    <div class="proposal" data-pid="${pid}">
+      <h4>Proposed plan${plan.company?` &middot; ${esc(plan.company)}`:""}</h4>
+      <p class="summary">Nothing changes until you approve. You can tweak or cancel.</p>
+      ${rows}
+      <div class="proposal-actions">
+        <button class="btn btn-primary btn-sm" data-act="approve">Approve</button>
+        <button class="btn btn-sm" data-act="tweak">Tweak</button>
+        <button class="btn btn-sm btn-ghost btn-danger" data-act="cancel">Cancel</button>
+      </div>
+    </div>`;
+  scrollChat();
+
+  const propEl = container.querySelector(".proposal");
+  propEl.querySelector('[data-act="approve"]').onclick = () => applyPlan(plan, propEl);
+  propEl.querySelector('[data-act="cancel"]').onclick = () => {
+    propEl.innerHTML = `<span class="sub">Cancelled — nothing changed.</span>`;
+  };
+  propEl.querySelector('[data-act="tweak"]').onclick = () => {
+    propEl.querySelectorAll(".txt-view").forEach(sp=>{
+      const i = sp.dataset.view;
+      const val = plan.actions[i].text;
+      sp.outerHTML = `<input class="edit" data-edit="${i}" value="${esc(val)}" />`;
+    });
+    propEl.querySelector('[data-act="tweak"]').textContent = "Editing…";
+  };
+}
+
+function applyPlan(plan, propEl){
+  let followText = "";
+  const fEl = propEl.querySelector("[data-followup]");
+  if (fEl) followText = fEl.value.trim();
+
+  plan.actions.forEach((a,i)=>{
+    const chk = propEl.querySelector(`[data-chk="${i}"]`);
+    if (chk && !chk.checked) return;
+    const editEl = propEl.querySelector(`[data-edit="${i}"]`);
+    const text = editEl ? editEl.value.trim() : a.text;
+
+    if (a.type === "add_company") {
+      const exists = state.companies.find(c => c.name.toLowerCase() === String(a.name||"").toLowerCase());
+      if (!exists && a.name) {
+        const startStage = a.stage || "Interested";
+        const steps = ["Interested","Researching","Applied","Interview","Offer"];
+        let sIdx = steps.findIndex(s => s.toLowerCase() === startStage.toLowerCase());
+        if (sIdx < 0) { steps.unshift(startStage); sIdx = 0; }
+        state.companies.push({
+          id: t(), name: a.name, role: a.role || a.name,
+          stage: startStage, steps, stepIdx: sIdx,
+          note: "Added from your update — build the plan of attack.", isNew: true
+        });
+      }
+    } else if (a.type === "advice") {
+      /* informational only — nothing to apply */
+    } else if (a.type === "stage") {
+      const co = state.companies.find(c => c.name === a.company || c.id === a.company);
+      if (co) {
+        const idx = co.steps.findIndex(s => s.toLowerCase() === String(a.to||"").toLowerCase());
+        co.stage = a.to || co.stage;
+        if (idx >= 0) co.stepIdx = idx; else co.stepIdx = Math.min(co.stepIdx+1, co.steps.length-1);
+      }
+    } else if (a.type === "task") {
+      state.tasks.unshift({ id:t(), title:text, due:a.due||"", company:a.company||plan.company||"", done:false, isNew:true });
+    } else if (a.type === "update_task") {
+      const m = String(a.match||"").toLowerCase();
+      const tk = state.tasks.find(x=>x.title.toLowerCase().includes(m)) || state.tasks.find(x=>!x.done);
+      if (tk) {
+        if (a.text) tk.title = a.text;
+        if (a.due) tk.due = a.due;
+        if (a.company) tk.company = a.company;
+        tk.isNew = true;
+      }
+    } else if (a.type === "remove_task") {
+      const m = String(a.match||"").toLowerCase();
+      const idx = state.tasks.findIndex(x=>x.title.toLowerCase().includes(m));
+      if (idx >= 0) state.tasks.splice(idx,1);
+    } else if (a.type === "calendar") {
+      if (a.title || a.day) {
+        state.calendar.push({ id:t(), title:a.title||text||"Event", month:String(a.month||"").toUpperCase().slice(0,4), day:a.day||"", time:a.time||"", hi:true });
+      } else {
+        const ev = state.calendar.find(e=>true);
+        if (ev) ev.hi = true;
+      }
+    } else if (a.type === "followup_ask") {
+      if (followText) {
+        state.tasks.unshift({ id:t(), title:'Follow-up drafted: "'+ (followText.length>70?followText.slice(0,70)+"…":followText) +'"', due:a.due||"", company:(plan.company||""), done:false, isNew:true });
+      }
+    }
+  });
+
+  saveState();
+  renderPipeline(); renderTasks(); renderCalendar();
+  const applied = propEl.querySelectorAll(".action-row .chk:checked").length + (followText?1:0);
+  propEl.innerHTML = `<span class="sub" style="color:var(--cp-success)">&#10003; Approved — applied ${applied} update${applied===1?"":"s"} to your pipeline, tasks &amp; calendar.</span>`;
+  setTimeout(()=>{ state.tasks.forEach(x=>x.isNew=false); state.companies.forEach(x=>x.isNew=false); saveState(); renderTasks(); renderPipeline(); }, 4000);
+}
+
+/* ---------- Send flow ---------- */
+let busy = false;
+async function handleSend(){
+  let text = $("composer").value.trim();
+  if (!text || busy) return;
+  busy = true; $("sendBtn").disabled = true;
+  const origText = text;
+  addUserMsg(text);
+  pushConvo("user", origText);
+  $("composer").value = "";
+
+  // If the message is essentially a job link, try the JD reader proxy first
+  if (isBareUrl(text)) {
+    const pageUrl = findUrl(text);
+    if (cfg.proxyUrl) {
+      const rdThinking = addThinking();
+      try {
+        const jd = await fetchJD(pageUrl);
+        rdThinking.remove();
+        addBotMsg(`<span style="color:var(--cp-success)">&#9679; Read the job posting (${jd.length} chars). Building a tailored plan…</span>`);
+        text = jd; // feed extracted JD text into the planner below
+      } catch(e){
+        rdThinking.remove();
+        addBotMsg(`<span style="color:var(--cp-warning)">&#9888; Couldn't read that link (${esc(e.message||"error")}). Paste the job description text and I'll tailor to it.</span>`);
+        // fall through: plan on the raw text (still useful)
+      }
+    } else {
+      addBotMsg(`<span style="color:var(--cp-text-soft)">I can't open links without a JD reader configured. Paste the job description text, or set a JD reader URL in <strong>API key</strong>. I'll plan from the link text for now.</span>`);
+    }
+  }
+
+  const thinking = addThinking();
+
+  const live = !!cfg.apiKey && !cfg.forceSafe;
+  const isFollowUp = convo.length > 2 && origText.length < 120;
+  const cacheKey = text.toLowerCase().trim().slice(0, 200);
+  let plan, usedLive = false, failReason = "", fromCache = false;
+
+  if (live && !isFollowUp && planCache[cacheKey]) {
+    plan = planCache[cacheKey]; fromCache = true;
+  } else if (live) {
+    try { const r = await callGemini(text); plan = r.plan; usedLive = true; if (!isFollowUp) planCache[cacheKey] = plan; usageBump(); }
+    catch(e) { plan = safePlan(text); failReason = (e && e.message) ? e.message : "network error"; }
+  } else {
+    await new Promise(r=>setTimeout(r, 450));
+    plan = safePlan(text);
+  }
+  if (plan && plan.reply) pushConvo("assistant", plan.reply);
+  thinking.remove();
+  if (fromCache) {
+    addBotMsg(`<span style="color:var(--cp-text-soft)">&#8635; Reused a cached answer — no token cost.</span>`);
+  } else if (live && !usedLive) {
+    const rate = /429|rate|quota/i.test(failReason);
+    const four04 = /404/.test(failReason);
+    let tip = "Run this from http/https (localhost or GitHub Pages), not a <code>file://</code> page, for live answers.";
+    if (rate) tip = "You hit the free-tier rate limit — wait a minute, or keep using safe mode (zero tokens).";
+    else if (four04) tip = "Your key couldn't find that model; the app tried alternates. Open <strong>API key</strong> and pick another model.";
+    addBotMsg(`<span style="color:var(--cp-warning)">&#9888; Live AI unavailable (${esc(failReason)}) — used safe mode. ${tip}</span>`);
+  } else if (usedLive) {
+    addBotMsg(`<span style="color:var(--cp-success)">&#9679; Live Gemini responded.</span>`);
+  }
+  const c = addBotMsg("");
+  renderProposal(plan, c);
+  busy = false; $("sendBtn").disabled = false;
+}
+
+/* ---------- Modal / key ---------- */
+function openKey(){
+  $("keyInput").value = cfg.apiKey;
+  $("modelInput").value = cfg.model;
+  $("proxyInput").value = cfg.proxyUrl;
+  $("keyStatus").textContent = cfg.apiKey ? "Live mode active." : "No key set — running in safe mode.";
+  $("keyModal").classList.add("open");
+}
+function closeKey(){ $("keyModal").classList.remove("open"); }
+
+function openSync(){
+  $("syncUrlInput").value = cfg.syncUrl;
+  $("syncCodeInput").value = cfg.syncCode;
+  $("syncAutoInput").checked = cfg.syncAuto;
+  setSyncStatus(cfg.syncUrl && cfg.syncCode ? "Sync configured." : "");
+  $("syncModal").classList.add("open");
+}
+function saveSyncCfg(){
+  cfg.syncUrl = $("syncUrlInput").value.trim();
+  cfg.syncCode = $("syncCodeInput").value.trim();
+  cfg.syncAuto = $("syncAutoInput").checked;
+  try {
+    localStorage.setItem("jhcos_sync_url", cfg.syncUrl);
+    localStorage.setItem("jhcos_sync_code", cfg.syncCode);
+    localStorage.setItem("jhcos_sync_auto", cfg.syncAuto ? "1" : "0");
+  } catch(e){}
+}
+function closeSync(){ $("syncModal").classList.remove("open"); }
+
+function greet(){
+  const name = state.profile.name || "there";
+  const hasData = state.companies.length > 0;
+  addBotMsg(`Hi ${esc(name)} — I'm your job-hunt Chief of Staff. ${hasData ? "Tell me what happened, or paste a job description and I'll build a tailored plan." : "Your pipeline is empty — add a role, or paste a job description to get started."} I never change anything without your approval.`);
+}
+
+/* ---------- Wire up ---------- */
+function init(){
+  renderPipeline(); renderTasks(); renderCalendar(); renderMode(); renderChips(); renderUsage();
+
+  const firstRun = !state.profile.name;
+  if (firstRun) { askName(true); } else { greet(); }
+
+  $("sendBtn").onclick = handleSend;
+  $("composer").addEventListener("keydown", e=>{
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
+  });
+  $("keyBtn").onclick = openKey;
+  $("keyCancel").onclick = closeKey;
+  $("keySave").onclick = () => {
+    cfg.apiKey = $("keyInput").value.trim();
+    cfg.model = $("modelInput").value;
+    cfg.proxyUrl = $("proxyInput").value.trim();
+    try {
+      localStorage.setItem("jhcos_key", cfg.apiKey);
+      localStorage.setItem("jhcos_model", cfg.model);
+      localStorage.setItem("jhcos_proxy", cfg.proxyUrl);
+    } catch(e){}
+    cfg.forceSafe = false;
+    renderMode(); closeKey();
+  };
+  $("modeToggle").onclick = () => {
+    if (!cfg.apiKey) { openKey(); return; }
+    cfg.forceSafe = !cfg.forceSafe; renderMode();
+  };
+  $("resetBtn").onclick = () => {
+    if (!confirm("Reset to the example pipeline? This replaces your current data on this device.")) return;
+    const nm = state.profile.name;
+    state = example(); state.profile.name = nm;
+    convo.length = 0;
+    saveState();
+    $("chatLog").innerHTML = "";
+    renderPipeline(); renderTasks(); renderCalendar();
+    greet();
+  };
+  $("addRoleBtn").onclick = addCompany;
+  $("addTaskBtn").onclick = addTask;
+  $("addEventBtn").onclick = addEvent;
+  $("calPrev").onclick = () => { calView.setMonth(calView.getMonth()-1); renderCalendar(); };
+  $("calNext").onclick = () => { calView.setMonth(calView.getMonth()+1); renderCalendar(); };
+  $("calToday").onclick = () => { calView = new Date(); calView.setDate(1); calSelected = today0(); renderCalendar(); };
+  $("editCancel").onclick = closeEdit;
+  $("editSave").onclick = () => { if (editOnSave) editOnSave(); };
+  $("editFields").addEventListener("keydown", e=>{
+    if (e.key === "Enter" && e.target.tagName !== "TEXTAREA") { e.preventDefault(); if (editOnSave) editOnSave(); }
+  });
+  $("keyModal").addEventListener("click", e=>{ if (e.target === $("keyModal")) closeKey(); });
+  $("editModal").addEventListener("click", e=>{ if (e.target === $("editModal")) closeEdit(); });
+  $("syncBtn").onclick = openSync;
+  $("syncCancel").onclick = () => { saveSyncCfg(); closeSync(); };
+  $("syncPush").onclick = () => { saveSyncCfg(); syncPush(false); };
+  $("syncPull").onclick = () => { saveSyncCfg(); syncPull(); };
+  $("syncAutoInput").onchange = saveSyncCfg;
+  $("syncModal").addEventListener("click", e=>{ if (e.target === $("syncModal")) { saveSyncCfg(); closeSync(); } });
+}
+init();
+</script>
+</body>
+</html>
