@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Job Hunt Chief of Staff</title>
+<title>Career Wingman</title>
 <script>
   (() => {
     const param = new URLSearchParams(window.location.search).get("scoutTheme");
@@ -452,16 +452,16 @@ a { color: var(--cp-link); }
 <div class="wrap">
   <header class="app">
     <div class="brand">
-      <div class="brand-mark" id="brandMark" title="Click to change your avatar">CS</div>
+      <div class="brand-mark emoji" id="brandMark" title="Click to change your avatar">&#129504;</div>
       <div class="avatar-pop" id="avatarPop">
         <h5>Avatars</h5>
         <div class="avatar-grid" id="avatarGridPeople"></div>
         <h5 style="margin-top:10px">Nature</h5>
         <div class="avatar-grid" id="avatarGridNature"></div>
-        <div style="margin-top:10px;text-align:right"><button class="btn btn-sm" id="avatarReset">Reset to CS</button></div>
+        <div style="margin-top:10px;text-align:right"><button class="btn btn-sm" id="avatarReset">Reset to default</button></div>
       </div>
       <div>
-        <h1 class="app-title-wrap"><span id="appTitle">Job Hunt Chief of Staff</span> <span class="title-edit" id="titleEdit" title="Edit your name">&#9998;</span></h1>
+        <h1 class="app-title-wrap"><span id="appTitle">Career Wingman</span> <span class="title-edit" id="titleEdit" title="Edit your name">&#9998;</span></h1>
         <p>My PM search — pipeline, tasks &amp; scheduling, run by an AI copilot I approve.</p>
       </div>
     </div>
@@ -1232,7 +1232,7 @@ function editEvent(id){
 }
 function askName(isFirstRun){
   if (isFirstRun) pendingFirstRun = true;
-  openEdit(isFirstRun?"Welcome — set up your Chief of Staff":"Your name", [
+  openEdit(isFirstRun?"Welcome — set up your Career Wingman":"Your name", [
     { key:"name", label:"What should I call you? (optional)", value: state.profile.name||"", placeholder:"Your first name" },
   ], v=>{
     const changed = (state.profile.name||"") !== (v.name||"").trim();
@@ -1254,13 +1254,13 @@ function addUserMsg(text){
 function addBotMsg(html){
   const d = document.createElement("div");
   d.className = "msg bot";
-  d.innerHTML = `<div class="who">Chief of Staff</div>${html}`;
+  d.innerHTML = `<div class="who">Career Wingman</div>${html}`;
   $("chatLog").appendChild(d); scrollChat(); return d;
 }
 function addThinking(){
   const d = document.createElement("div");
   d.className = "msg bot";
-  d.innerHTML = `<div class="who">Chief of Staff</div><div class="thinking"><span></span><span></span><span></span></div>`;
+  d.innerHTML = `<div class="who">Career Wingman</div><div class="thinking"><span></span><span></span><span></span></div>`;
   $("chatLog").appendChild(d); scrollChat(); return d;
 }
 function scrollChat(){ const l=$("chatLog"); l.scrollTop = l.scrollHeight; }
@@ -1278,7 +1278,7 @@ function guardInput(text){
   const followUpish = text.trim().length < 60 && /\b(make (that|it)|change|move|reschedule|set|due|instead|rename|update|remove|delete|drop|add|yes|no|friday|monday|tuesday|wednesday|thursday|saturday|sunday|tomorrow|today|next week|this week)\b/i.test(text);
   const looksJd = looksLikeJD(text);
   if (!jobTerms.test(s) && !followUpish && !looksJd && text.trim().length > 3) {
-    return { block:true, offtopic:true, message:"I'm your job-hunt Chief of Staff — I can only help with your job search: roles, applications, interviews, networking, and the tasks around them. Tell me what's happening with a role and I'll build a plan." };
+    return { block:true, offtopic:true, message:"I'm your Career Wingman — I can only help with your job search: roles, applications, interviews, networking, and the tasks around them. Tell me what's happening with a role and I'll build a plan." };
   }
   return { block:false };
 }
@@ -1363,7 +1363,7 @@ function buildPrompt(userText){
     ? "Recent conversation (oldest first), for resolving follow-ups like \"make that Friday\":\n" +
       convo.map(m=>`${m.role === "user" ? "User" : "You"}: ${m.text}`).join("\n") + "\n\n"
     : "";
-  return `You are "Chief of Staff", an AI copilot running a product manager's job search. Today is ${today}. You PROPOSE plans; you never act on your own.
+  return `You are "Career Wingman", an AI copilot running a product manager's job search. Today is ${today}. You PROPOSE plans; you never act on your own.
 Existing pipeline: ${names}.
 Current open tasks: ${openTasks}.
 ${history}${jd ? "The user pasted a JOB DESCRIPTION. Read it, extract the real role title, and tailor everything to its actual requirements." : "The user sent a short message. If it refers to something earlier (e.g. \"make that Friday\", \"add one more\", \"change the second task\"), use the recent conversation and current tasks to figure out what they mean and propose the specific edit."}
@@ -1386,6 +1386,24 @@ Action types:
 Rules: if a JD/new role is present, start with add_company then advice then tasks pulled from the JD. For a follow-up tweak, return only the specific update_task/remove_task/calendar/stage action needed. If the user asks to find/connect with people at a company, include a find_people action. 3-6 actions max. JSON only.`;
 }
 
+/* Salvage a truncated/malformed JSON plan by keeping only complete action objects. */
+function repairJson(s){
+  try {
+    const replyM = s.match(/"reply"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+    const companyM = s.match(/"company"\s*:\s*(?:"((?:[^"\\]|\\.)*)"|null)/);
+    const actions = [];
+    // find each {...} object inside the actions array that parses cleanly
+    const objRe = /\{[^{}]*\}/g; let m;
+    const actionsStart = s.indexOf('"actions"');
+    const scope = actionsStart >= 0 ? s.slice(actionsStart) : s;
+    while ((m = objRe.exec(scope))) {
+      try { const o = JSON.parse(m[0]); if (o && o.type) actions.push(o); } catch(e){}
+    }
+    if (!actions.length) return null;
+    return { reply: replyM ? JSON.parse('"'+replyM[1]+'"') : "Here's a plan.", company: companyM && companyM[1] ? companyM[1] : null, actions };
+  } catch(e){ return null; }
+}
+
 async function callGemini(userText, promptOverride){
   let models = [cfg.model].concat(MODEL_FALLBACKS.filter(m=>m!==cfg.model));
   let triedDiscovery = false;
@@ -1406,7 +1424,7 @@ async function callGemini(userText, promptOverride){
           signal: ctrl.signal,
           body: JSON.stringify({
             contents: [{ parts: [{ text: promptText }] }],
-            generationConfig: { temperature: 0.4, responseMimeType: "application/json", maxOutputTokens: 900 }
+            generationConfig: { temperature: 0.4, responseMimeType: "application/json", maxOutputTokens: 2048 }
           })
         });
         clearTimeout(timer);
@@ -1419,11 +1437,14 @@ async function callGemini(userText, promptOverride){
         }
         if (!res.ok) throw new Error("API " + res.status);
         const data = await res.json();
+        const finish = data?.candidates?.[0]?.finishReason;
         const txt = data?.candidates?.[0]?.content?.parts?.[0]?.text;
         if (!txt) throw new Error("empty response");
         const clean = txt.replace(/^```json\s*/i,"").replace(/```\s*$/,"").trim();
-        const plan = JSON.parse(clean);
-        if (!plan.actions || !Array.isArray(plan.actions)) throw new Error("bad shape");
+        let plan;
+        try { plan = JSON.parse(clean); }
+        catch(parseErr){ plan = repairJson(clean); if (!plan) throw parseErr; } // salvage truncated JSON
+        if (!plan.actions || !Array.isArray(plan.actions) || !plan.actions.length) throw new Error("bad shape");
         if (model !== cfg.model) { cfg.model = model; try { localStorage.setItem("jhcos_model", model); } catch(e){} } // remember working model
         return { plan, live:true };
       } catch(e) {
@@ -1520,14 +1541,14 @@ function safePlan(userText){
     const label = extractTitle(userText);
     // Light "reading" of the JD: pull themes to tailor tasks
     const themeTasks = [];
-    if (/\bapi|platform|developer|integration|services/.test(s)) themeTasks.push("Map my API/platform work (AWS CI/CD pipelines, Salesforce) to their platform needs");
-    if (/identity|auth|access|security|iam/.test(s)) themeTasks.push("Prep my passwordless-IAM / identity story for their access-management asks");
+    if (/\bapi|platform|developer|integration|services/.test(s)) themeTasks.push("Map your API/platform experience to their platform needs");
+    if (/identity|auth|access|security|iam/.test(s)) themeTasks.push("Prepare an identity / access-management example for their security asks");
     if (/\bai\b|ml|genai|copilot|llm/.test(s)) themeTasks.push("Prepare 1-2 examples of shipping/using AI tools (they value AI fluency)");
     if (/health|clinical|patient|care|ehr/.test(s)) themeTasks.push("Read up on their healthcare domain + one recent product move");
-    if (/payment|banking|fintech|financial/.test(s)) themeTasks.push("Frame my CIBC payments/core-banking work against their fintech context");
+    if (/payment|banking|fintech|financial/.test(s)) themeTasks.push("Frame any fintech/payments experience against their context");
     const baseTasks = [
       "Read the JD twice and list the 4-5 outcomes the role must deliver",
-      "Map 2-3 of my strongest PM/eng wins to those outcomes",
+      "Map 2-3 of your strongest wins to those outcomes",
       "Find a 2nd-degree connection for a warm intro / referral",
     ];
     const tasks = baseTasks.concat(themeTasks).slice(0,5).map(txt=>({ type:"task", company:label, due:"This week", text:txt }));
@@ -1539,7 +1560,7 @@ function safePlan(userText){
         { type:"advice", text:
           `How I'd approach this:\n`+
           `1) Decode the role — list the 4-5 outcomes it's really hired to deliver.\n`+
-          `2) Map your proof — pick 2-3 of your strongest wins (CIBC payments/data platform, AWS CI/CD pipelines, Salesforce passwordless IAM) that match.\n`+
+          `2) Map your proof — pick 2-3 of your strongest, most relevant wins that match those outcomes.\n`+
           `3) Warm intro first — find a 2nd-degree connection and aim for a referral before applying cold.\n`+
           `4) Tailor, don't spray — rewrite your resume summary + top bullets in the role's own language.\n`+
           `5) Prep the narrative — draft 3 STAR stories tied to the top outcomes.` },
@@ -1601,16 +1622,17 @@ async function prepInterview(coId){
   renderProposal(plan, c);
 }
 function prepPrompt(co){
-  return `You are "Chief of Staff", prepping a product manager for a job interview. The candidate's background: CSPO-certified PM, Rotman MBA, ex-Salesforce & AWS software engineer (passwordless IAM, AWS CI/CD pipelines), CIBC product roles in payments/core-banking & a centralized data platform.
+  const who = (state.profile.name||"the candidate");
+  return `You are "Career Wingman", prepping a product manager (${who}) for a job interview.
 Role: "${co.role}" at "${co.name}". Notes: ${(co.notes||[]).map(n=>n.body).filter(Boolean).join(" | ")||"n/a"}.
 Produce interview prep as ONLY JSON (no fences):
 {"reply":"one short sentence","company":"${co.name}","actions":[
  {"type":"advice","text":"Likely questions:\\n1) ...\\n2) ...\\n3) ...\\n4) ...\\n5) ..."},
- {"type":"advice","text":"Your STAR stories to lead with:\\n• ... (maps to ...)\\n• ...\\n• ..."},
+ {"type":"advice","text":"STAR-story angles to prepare (leave blanks for the candidate to fill with their own experience):\\n• A product you shipped end-to-end → ...\\n• A hard prioritization call → ...\\n• A cross-functional win → ..."},
  {"type":"task","company":"${co.name}","due":"Before the interview","text":"Rehearse 3 STAR stories out loud"},
  {"type":"task","company":"${co.name}","due":"Before the interview","text":"Prepare 3 smart questions to ask them"}
 ]}
-Make the questions specific to this role and the STAR stories specific to the candidate's real experience. JSON only.`;
+Make the questions specific to this role. Do NOT invent the candidate's work history — give story ANGLES they should fill with their own experience. JSON only.`;
 }
 function prepSafe(co){
   return {
@@ -1621,14 +1643,14 @@ function prepSafe(co){
         `Likely questions for ${co.role}:\n`+
         `1) Walk me through a product you shipped end-to-end and the impact.\n`+
         `2) How do you prioritize when engineering, design, and stakeholders disagree?\n`+
-        `3) Tell me about a technical trade-off you drove (APIs / platform / identity).\n`+
+        `3) Tell me about a technical trade-off you drove.\n`+
         `4) How do you use data and AI tools in your PM workflow?\n`+
         `5) Describe a time you turned around a struggling initiative.` },
       { type:"advice", text:
-        `STAR stories to lead with:\n`+
-        `• Passwordless IAM at Salesforce → identity & access depth.\n`+
-        `• AWS CI/CD pipeline automation → workflow orchestration & platform thinking.\n`+
-        `• CIBC payments / centralized data platform → cross-functional delivery & impact.` },
+        `STAR-story angles to prepare (fill these with your own experience):\n`+
+        `• A product you shipped end-to-end → impact & metrics.\n`+
+        `• A tough prioritization or trade-off call → your reasoning.\n`+
+        `• A cross-functional win → how you aligned people.` },
       { type:"task", company:co.name, due:"Before the interview", text:"Rehearse 3 STAR stories out loud" },
       { type:"task", company:co.name, due:"Before the interview", text:"Prepare 3 smart questions to ask them" },
     ],
@@ -1683,7 +1705,7 @@ function renderProposal(plan, container){
     </div>`;
   }).join("");
 
-  container.innerHTML = `<div class="who">Chief of Staff</div>
+  container.innerHTML = `<div class="who">Career Wingman</div>
     <div style="margin-bottom:10px">${esc(plan.reply || "Here's my proposed plan:")}</div>
     <div class="proposal" data-pid="${pid}">
       <h4>Proposed plan${plan.company?` &middot; ${esc(plan.company)}`:""}</h4>
@@ -1826,6 +1848,7 @@ function applyPlan(plan, propEl){
 
 /* ---------- Send flow ---------- */
 let busy = false;
+let nokeyNudged = false;
 async function handleSend(){
   let text = $("composer").value.trim();
   if (!text || busy) return;
@@ -1898,6 +1921,11 @@ async function handleSend(){
     addBotMsg(`<span style="color:var(--cp-warning)">&#9888; Live AI unavailable (${esc(failReason)}) — used safe mode. ${tip}</span>`);
   } else if (usedLive) {
     addBotMsg(`<span style="color:var(--cp-success)">&#9679; Live Gemini responded.</span>`);
+  } else if (!cfg.apiKey && !nokeyNudged) {
+    nokeyNudged = true;
+    const m = addBotMsg(`<span style="color:var(--cp-text-muted)">You're in <strong>safe mode</strong> (scripted answers). For AI tailored to <em>you</em>, add a free Google Gemini key — <a href="#" id="nokeyLink">add it now</a>. <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">Get a free key →</a></span>`);
+    const link = m.querySelector("#nokeyLink");
+    if (link) link.onclick = (e)=>{ e.preventDefault(); openKey(); };
   }
   const c = addBotMsg("");
   renderProposal(plan, c);
@@ -1939,10 +1967,10 @@ function titleCase(s){ return String(s||"").trim().replace(/\S+/g, w => w.charAt
 function renderAssistantName(){
   const nm = titleCase(state.profile.name);
   const el = $("assistantName");
-  if (el) el.textContent = nm ? `${nm}'s Chief of Staff` : "Your Chief of Staff";
+  if (el) el.textContent = nm ? `${nm}'s Career Wingman` : "Your Career Wingman";
   const title = $("appTitle");
-  if (title) title.textContent = nm ? `${nm}'s Job Hunt Chief of Staff` : "Job Hunt Chief of Staff";
-  try { document.title = nm ? `${nm}'s Job Hunt Chief of Staff` : "Job Hunt Chief of Staff"; } catch(e){}
+  if (title) title.textContent = nm ? `${nm}'s Career Wingman` : "Career Wingman";
+  try { document.title = nm ? `${nm}'s Career Wingman` : "Career Wingman"; } catch(e){}
 }
 
 const AVATARS_PEOPLE = ["🧑‍💼","👩‍💼","👨‍💼","🧑‍💻","👩‍💻","👨‍💻","🦸","🦸‍♀️","🧑‍🎓","👩‍🎓","🕵️","🧑‍🚀","🤖","🧠"];
@@ -1951,7 +1979,7 @@ function renderAvatar(){
   const el = $("brandMark"); if (!el) return;
   const av = state.profile.avatar;
   if (av) { el.textContent = av; el.classList.add("emoji"); }
-  else { el.textContent = "CS"; el.classList.remove("emoji"); }
+  else { el.textContent = "\uD83E\uDDE0"; el.classList.add("emoji"); } // default: brain icon
 }
 function buildAvatarPicker(){
   const mk = (arr, grid) => { $(grid).innerHTML = arr.map(e=>`<div class="avatar-opt ${state.profile.avatar===e?"sel":""}" data-av="${e}">${e}</div>`).join(""); };
@@ -1965,7 +1993,7 @@ function buildAvatarPicker(){
 function greet(){
   const name = state.profile.name || "there";
   const hasData = state.companies.length > 0;
-  addBotMsg(`Hi ${esc(name)} — I'm your job-hunt Chief of Staff. ${hasData ? "Tell me what happened, or paste a job description and I'll build a tailored plan." : "Your pipeline is empty — add a role, or paste a job description to get started."} I never change anything without your approval.`);
+  addBotMsg(`Hi ${esc(name)} — I'm your Career Wingman. ${hasData ? "Tell me what happened, or paste a job description and I'll build a tailored plan." : "Your pipeline is empty — add a role, or paste a job description to get started."} I never change anything without your approval.`);
 }
 
 /* ---------- Wire up ---------- */
