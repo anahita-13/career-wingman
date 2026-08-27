@@ -1292,6 +1292,11 @@ function guardInput(text){
   if (harmful.test(s)) {
     return { block:true, message:"I can't help with that. I'm a job-search assistant — if you're dealing with something serious, please reach out to a qualified professional or local support service." };
   }
+  // 1b) Greetings / meta-questions → friendly, welcoming reply (not a stern redirect).
+  const greeting = /^\s*(hi|hey|hello|yo|hiya|howdy|sup|good (morning|afternoon|evening)|are you (there|online|working|live|real)|you there|test|testing|who are you|what (can|do) you (do|help)|how do you work|what are you)\b/i.test(text.trim());
+  if (greeting && text.trim().length < 60) {
+    return { block:true, greeting:true, message:"Hey! Yes, I'm here. I'm your Career Wingman — tell me what's happening with your job search (you applied somewhere, have an interview, got a referral, want to find people at a company, or paste a job description) and I'll propose a plan you can approve." };
+  }
   // 2) On-topic check: does this relate to a job search?
   const jobTerms = /\b(job|jobs|role|roles|position|posting|application|apply|applied|applying|recruit|recruiter|recruiting|interview|interviews|interviewing|screen|screening|offer|offers|reject|rejected|rejection|ghost|ghosted|resume|cv|cover letter|referral|refer|referred|network|networking|connect|connecting|connection|coffee chat|hiring|hire|hired|manager|company|companies|\bpm\b|product|program|engineer|engineering|analyst|designer|developer|scientist|salary|comp|compensation|negotiate|negotiating|onboard|onboarding|linkedin|follow.?up|reach out|outreach|cold email|career|careers|opening|openings|team|\bhr\b|talent|panel|loop|take.?home|assessment|portfolio|standup|stakeholder|okr|roadmap|prep|prepare|preparing|switch(ing)? careers?|break into|hunt|search|opportunit)/;
   const peopleAt = /\b(people|contacts?|folks|someone)\b[\s\w]*\bat\b/.test(s); // "connect me with people at X"
@@ -2019,7 +2024,7 @@ async function handleSend(){
   if (!isBareUrl(text)) {
     const g = guardInput(text);
     if (g.block) {
-      addBotMsg(`<span style="color:${g.offtopic ? "var(--cp-text-muted)" : "var(--cp-danger)"}">${esc(g.message)}</span>`);
+      addBotMsg(`<span style="color:${(g.offtopic || g.greeting) ? "var(--cp-text-muted)" : "var(--cp-danger)"}">${esc(g.message)}</span>`);
       busy = false; $("sendBtn").disabled = false;
       return;
     }
