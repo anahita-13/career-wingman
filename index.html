@@ -1405,6 +1405,18 @@ Action types:
 Rules: if a JD/new role is present, start with add_company then advice then tasks pulled from the JD. For a follow-up tweak, return only the specific update_task/remove_task/calendar/stage action needed. If the user asks to find/connect with people at a company, include a find_people action. 3-6 actions max. JSON only.`;
 }
 
+/* Parse a plan from raw model text: strips fences/prose, then repairs if needed. */
+function parsePlanText(txt){
+  let clean = String(txt||"").replace(/^```json\s*/i,"").replace(/```\s*$/,"").trim();
+  // If wrapped in prose, extract the first {...} block spanning the JSON object.
+  const first = clean.indexOf("{"), last = clean.lastIndexOf("}");
+  if (first > 0 && last > first) clean = clean.slice(first, last+1);
+  let plan;
+  try { plan = JSON.parse(clean); } catch(e){ plan = repairJson(clean); }
+  if (!plan || !plan.actions || !Array.isArray(plan.actions) || !plan.actions.length) return null;
+  return plan;
+}
+
 /* Salvage a truncated/malformed JSON plan by keeping only complete action objects. */
 function repairJson(s){
   try {
@@ -1443,6 +1455,12 @@ async function callOpenAICompatible(promptText){
       const ctrl = new AbortController();
       const timer = setTimeout(()=>ctrl.abort(), 15000);
       try {
+        const bodyObj = {
+          model,
+          messages: [{ role:"system", content:"You are a helpful assistant that replies with a single valid JSON object and nothing else." }, { role:"user", content: promptText }],
+          temperature: 0.4,
+          max_tokens: 2048,
+        };
         const res = await fetch(endpoint, {
           method: "POST",
           headers: Object.assign(
@@ -1450,13 +1468,7 @@ async function callOpenAICompatible(promptText){
             cfg.provider === "openrouter" ? { "X-Title":"Career Wingman" } : {}
           ),
           signal: ctrl.signal,
-          body: JSON.stringify({
-            model,
-            messages: [{ role:"user", content: promptText }],
-            temperature: 0.4,
-            max_tokens: 2048,
-            response_format: { type: "json_object" },
-          })
+          body: JSON.stringify(bodyObj)
         });
         clearTimeout(timer);
         if (res.status === 404 || res.status === 400) { lastErr = new Error("API " + res.status + " (model unavailable)"); break; } // try next model
@@ -1471,10 +1483,8 @@ async function callOpenAICompatible(promptText){
         const data = await res.json();
         const txt = data?.choices?.[0]?.message?.content;
         if (!txt) throw new Error("empty response");
-        const clean = txt.replace(/^```json\s*/i,"").replace(/```\s*$/,"").trim();
-        let plan;
-        try { plan = JSON.parse(clean); } catch(e){ plan = repairJson(clean); if (!plan) throw e; }
-        if (!plan.actions || !Array.isArray(plan.actions) || !plan.actions.length) throw new Error("bad shape");
+        const plan = parsePlanText(txt);
+        if (!plan) throw new Error("bad shape");
         if (model !== cfg.model) { cfg.model = model; try { localStorage.setItem("jhcos_model", model); } catch(e){} } // remember working model
         return { plan, live:true };
       } catch(e){
@@ -1523,14 +1533,10 @@ async function callGemini(userText, promptOverride){
         }
         if (!res.ok) throw new Error("API " + res.status);
         const data = await res.json();
-        const finish = data?.candidates?.[0]?.finishReason;
         const txt = data?.candidates?.[0]?.content?.parts?.[0]?.text;
         if (!txt) throw new Error("empty response");
-        const clean = txt.replace(/^```json\s*/i,"").replace(/```\s*$/,"").trim();
-        let plan;
-        try { plan = JSON.parse(clean); }
-        catch(parseErr){ plan = repairJson(clean); if (!plan) throw parseErr; } // salvage truncated JSON
-        if (!plan.actions || !Array.isArray(plan.actions) || !plan.actions.length) throw new Error("bad shape");
+        const plan = parsePlanText(txt);
+        if (!plan) throw new Error("bad shape");
         if (model !== cfg.model) { cfg.model = model; try { localStorage.setItem("jhcos_model", model); } catch(e){} } // remember working model
         return { plan, live:true };
       } catch(e) {
