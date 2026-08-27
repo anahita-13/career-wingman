@@ -1029,6 +1029,7 @@ Return ONLY JSON (no fences):
 {"reply":"one short sentence","company":"existing name | new role name | null","actions":[...]}
 Action types:
 - {"type":"add_company","name":"<short label>","role":"<title>","stage":"Interested","text":"..."} — when a NEW role/JD/link is introduced.
+- {"type":"update_company","match":"<words from the existing company name>","name":"<new name, optional>","role":"<new role, optional>","note":"<new note, optional>","text":"..."} — to RENAME or edit an EXISTING company (use for "rename Company X to PointClickCare", "change the role to Group PM").
 - {"type":"advice","text":"How I'd approach this:\\n1) ...\\n2) ..."} — 3-5 concrete, tailored numbered steps referencing the user's PM/eng background and THIS role's real requirements. Never generic, never an echo.
 - {"type":"task","company":"<role name>","due":"e.g. This week","text":"..."} — a NEW checkable task.
 - {"type":"update_task","match":"<words from the existing task's text>","due":"<new due, optional>","text":"<new title, optional>"} — to EDIT an existing task (use for "make that Friday", "rename the second task").
@@ -1102,6 +1103,23 @@ function safePlan(userText){
   const isJD = looksLikeJD(userText);
   const hasLink = /https?:\/\/|careers|apply|\bjob\b|\bposition\b|opening/.test(s);
   const wantsApproach = /approach|how (do|should|would)|suggest|strategy|prepare|prep|tips|advice|go about/.test(s);
+
+  // Rename / edit an existing company — e.g. "change Company X's name to PointClickCare"
+  const renameMatch = userText.match(/(?:rename|change|update|set)\s+(.+?)(?:'s\s+name|\s+name)?\s+to\s+(.+)/i);
+  if (renameMatch && state.companies.length) {
+    const target = renameMatch[1].replace(/\b(the|company|role|name|it)\b/gi,"").trim();
+    const newName = renameMatch[2].replace(/[.?!]+$/,"").trim();
+    const co = state.companies.find(c=>c.name.toLowerCase().includes(target.toLowerCase()) || target.toLowerCase().includes(c.name.toLowerCase()))
+      || (state.companies.length === 1 ? state.companies[0] : null);
+    if (co && newName && /name|rename|call/i.test(s)) {
+      return { reply:`Sure — I'll rename "${co.name}" to "${newName}".`, company:co.name,
+        actions:[{ type:"update_company", match:co.name, name:newName, text:`Rename "${co.name}" → "${newName}"` }] };
+    }
+    if (co && newName && /role|title/i.test(s)) {
+      return { reply:`Okay — updating ${co.name}'s role to "${newName}".`, company:co.name,
+        actions:[{ type:"update_company", match:co.name, role:newName, text:`Change ${co.name}'s role to "${newName}"` }] };
+    }
+  }
 
   // Follow-up tweak (uses conversation memory) — e.g. "make that Friday", "change the due date"
   const dueMatch = s.match(/\b(today|tomorrow|monday|tuesday|wednesday|thursday|friday|saturday|sunday|next week|this week|end of week|eod|sep \d+|oct \d+|\d{1,2}\/\d{1,2})\b/);
@@ -1189,8 +1207,8 @@ let proposalSeq = 0;
 function renderProposal(plan, container){
   const pid = "p" + (proposalSeq++);
   const rows = plan.actions.map((a,i)=>{
-    const ico = { stage:"&#9654;", task:"&#9744;", calendar:"&#128197;", followup_ask:"&#9997;", add_company:"&#10133;", advice:"&#128161;", update_task:"&#9998;", remove_task:"&#128465;" }[a.type] || "&#8226;";
-    const kind = { stage:"Update stage", task:"Add task", calendar:"Calendar", followup_ask:"Ask me", add_company:"Add to pipeline", advice:"How to approach", update_task:"Edit task", remove_task:"Remove task" }[a.type] || "Action";
+    const ico = { stage:"&#9654;", task:"&#9744;", calendar:"&#128197;", followup_ask:"&#9997;", add_company:"&#10133;", advice:"&#128161;", update_task:"&#9998;", remove_task:"&#128465;", update_company:"&#9998;" }[a.type] || "&#8226;";
+    const kind = { stage:"Update stage", task:"Add task", calendar:"Calendar", followup_ask:"Ask me", add_company:"Add to pipeline", advice:"How to approach", update_task:"Edit task", remove_task:"Remove task", update_company:"Edit role" }[a.type] || "Action";
     if (a.type === "followup_ask") {
       return `<div class="followup-ask" data-i="${i}">
         <label>${esc(a.text)}</label>
@@ -1269,8 +1287,22 @@ function applyPlan(plan, propEl){
           note: "Added from your update — build the plan of attack.", isNew: true
         });
       }
+    } else if (a.type === "update_company") {
+      const m = String(a.match||a.company||"").toLowerCase();
+      const co = state.companies.find(c => c.name.toLowerCase() === m)
+        || state.companies.find(c => c.name.toLowerCase().includes(m) || m.includes(c.name.toLowerCase()));
+      if (co) {
+        const oldName = co.name;
+        if (a.name) co.name = a.name;
+        if (a.role) co.role = a.role;
+        if (a.note) co.note = a.note;
+        co.isNew = true;
+        // keep any tasks pointing at the old company name in sync
+        if (a.name && a.name !== oldName) {
+          state.tasks.forEach(tk => { if (tk.company === oldName) tk.company = a.name; });
+        }
+      }
     } else if (a.type === "advice") {
-      /* informational only — nothing to apply */
     } else if (a.type === "stage") {
       const co = state.companies.find(c => c.name === a.company || c.id === a.company);
       if (co) {
