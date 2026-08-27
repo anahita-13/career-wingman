@@ -1014,36 +1014,48 @@ Rules: if a JD/new role is present, start with add_company then advice then task
 async function callGemini(userText){
   const models = [cfg.model].concat(MODEL_FALLBACKS.filter(m=>m!==cfg.model));
   let lastErr = new Error("unknown");
+  const sleep = ms => new Promise(r=>setTimeout(r, ms));
   for (const model of models) {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(cfg.apiKey)}`;
-    const ctrl = new AbortController();
-    const timer = setTimeout(()=>ctrl.abort(), 15000);
-    try {
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        signal: ctrl.signal,
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: buildPrompt(userText) }] }],
-          generationConfig: { temperature: 0.4, responseMimeType: "application/json", maxOutputTokens: 900 }
-        })
-      });
-      clearTimeout(timer);
-      if (res.status === 404) { lastErr = new Error("API 404 (model not found)"); continue; } // try next model
-      if (res.status === 429) { throw new Error("429 rate limit — free quota reached"); }
-      if (!res.ok) throw new Error("API " + res.status);
-      const data = await res.json();
-      const txt = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (!txt) throw new Error("empty response");
-      const clean = txt.replace(/^```json\s*/i,"").replace(/```\s*$/,"").trim();
-      const plan = JSON.parse(clean);
-      if (!plan.actions || !Array.isArray(plan.actions)) throw new Error("bad shape");
-      if (model !== cfg.model) { cfg.model = model; try { localStorage.setItem("jhcos_model", model); } catch(e){} } // remember working model
-      return { plan, live:true };
-    } catch(e) {
-      clearTimeout(timer);
-      lastErr = e;
-      if (String(e.message).indexOf("404") === -1) throw e; // only keep looping on 404s
+    // Retry transient errors (503 overloaded / 500) up to 3 attempts with backoff
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const ctrl = new AbortController();
+      const timer = setTimeout(()=>ctrl.abort(), 15000);
+      try {
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          signal: ctrl.signal,
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: buildPrompt(userText) }] }],
+            generationConfig: { temperature: 0.4, responseMimeType: "application/json", maxOutputTokens: 900 }
+          })
+        });
+        clearTimeout(timer);
+        if (res.status === 404) { lastErr = new Error("API 404 (model not found)"); break; } // try next model
+        if (res.status === 429) { throw new Error("429 rate limit — free quota reached"); }
+        if (res.status === 503 || res.status === 500) {
+          lastErr = new Error("API " + res.status + " (Google servers busy)");
+          if (attempt < 2) { await sleep(700 * (attempt + 1)); continue; } // retry same model
+          break; // give up on this model, try next
+        }
+        if (!res.ok) throw new Error("API " + res.status);
+        const data = await res.json();
+        const txt = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!txt) throw new Error("empty response");
+        const clean = txt.replace(/^```json\s*/i,"").replace(/```\s*$/,"").trim();
+        const plan = JSON.parse(clean);
+        if (!plan.actions || !Array.isArray(plan.actions)) throw new Error("bad shape");
+        if (model !== cfg.model) { cfg.model = model; try { localStorage.setItem("jhcos_model", model); } catch(e){} } // remember working model
+        return { plan, live:true };
+      } catch(e) {
+        clearTimeout(timer);
+        lastErr = e;
+        const msg = String(e.message);
+        if (e.name === "AbortError" && attempt < 2) { await sleep(500); continue; } // retry timeouts
+        if (msg.indexOf("404") !== -1 || msg.indexOf("503") !== -1 || msg.indexOf("500") !== -1) break; // move to next model
+        throw e; // 429, bad key, parse errors etc. — stop
+      }
     }
   }
   throw lastErr;
@@ -1328,8 +1340,12 @@ async function handleSend(){
   } else if (live && !usedLive) {
     const rate = /429|rate|quota/i.test(failReason);
     const four04 = /404/.test(failReason);
+    const busy503 = /503|500|busy|overload/i.test(failReason);
+    const timeout = /abort|timeout/i.test(failReason);
     let tip = "Run this from http/https (localhost or GitHub Pages), not a <code>file://</code> page, for live answers.";
     if (rate) tip = "You hit the free-tier rate limit — wait a minute, or keep using safe mode (zero tokens).";
+    else if (busy503) tip = "Google's Gemini servers are momentarily busy — I retried a few times. Just hit Send again in a moment.";
+    else if (timeout) tip = "The request timed out — check your connection and try Send again.";
     else if (four04) tip = "Your key couldn't find that model; the app tried alternates. Open <strong>API key</strong> and pick another model.";
     addBotMsg(`<span style="color:var(--cp-warning)">&#9888; Live AI unavailable (${esc(failReason)}) — used safe mode. ${tip}</span>`);
   } else if (usedLive) {
