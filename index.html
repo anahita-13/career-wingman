@@ -1472,15 +1472,32 @@ function repairJson(s){
     const replyM = s.match(/"reply"\s*:\s*"((?:[^"\\]|\\.)*)"/);
     const companyM = s.match(/"company"\s*:\s*(?:"((?:[^"\\]|\\.)*)"|null)/);
     const actions = [];
-    // find each {...} object inside the actions array that parses cleanly
-    const objRe = /\{[^{}]*\}/g; let m;
     const actionsStart = s.indexOf('"actions"');
     const scope = actionsStart >= 0 ? s.slice(actionsStart) : s;
-    while ((m = objRe.exec(scope))) {
-      try { const o = JSON.parse(m[0]); if (o && o.type) actions.push(o); } catch(e){}
+    // Walk the string and pull out each balanced {...} object (handles nesting).
+    for (let i = 0; i < scope.length; i++) {
+      if (scope[i] !== "{") continue;
+      let depth = 0, inStr = false, esc = false, end = -1;
+      for (let j = i; j < scope.length; j++) {
+        const ch = scope[j];
+        if (esc) { esc = false; continue; }
+        if (ch === "\\") { esc = true; continue; }
+        if (ch === '"') { inStr = !inStr; continue; }
+        if (inStr) continue;
+        if (ch === "{") depth++;
+        else if (ch === "}") { depth--; if (depth === 0) { end = j; break; } }
+      }
+      if (end > i) {
+        const frag = scope.slice(i, end + 1);
+        try { const o = JSON.parse(frag); if (o && o.type) actions.push(o); } catch(e){}
+        i = end; // skip past this object
+      } else break; // unbalanced tail — stop
     }
     if (!actions.length) return null;
-    return { reply: replyM ? JSON.parse('"'+replyM[1]+'"') : "Here's a plan.", company: companyM && companyM[1] ? companyM[1] : null, actions };
+    // dedupe
+    const seen = new Set();
+    const uniq = actions.filter(a=>{ const k = JSON.stringify(a); if (seen.has(k)) return false; seen.add(k); return true; });
+    return { reply: replyM ? JSON.parse('"'+replyM[1]+'"') : "Here's a plan.", company: companyM && companyM[1] ? companyM[1] : null, actions: uniq };
   } catch(e){ return null; }
 }
 
@@ -1514,8 +1531,8 @@ async function callOpenAICompatible(promptText){
       try {
         const bodyObj = {
           model,
-          messages: [{ role:"system", content:"You are a helpful assistant that replies with a single valid JSON object and nothing else." }, { role:"user", content: promptText }],
-          temperature: 0.4,
+          messages: [{ role:"system", content:"You output ONLY a single valid minified JSON object. No markdown, no code fences, no commentary before or after. Start your reply with { and end with }." }, { role:"user", content: promptText }],
+          temperature: 0.3,
           max_tokens: 2048,
         };
         const res = await fetch(endpoint, {
