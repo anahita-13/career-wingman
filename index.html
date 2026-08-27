@@ -737,7 +737,7 @@ const cfg = {
 };
 const PROVIDERS = {
   gemini: { label:"Google Gemini", keyHint:"AIza…", keyUrl:"https://aistudio.google.com/app/apikey",
-    models:["gemini-2.0-flash","gemini-flash-latest","gemini-1.5-flash","gemini-2.5-flash"], defaultModel:"gemini-2.0-flash" },
+    models:["gemini-3.6-flash","gemini-3.5-flash","gemini-2.5-flash","gemini-2.5-pro"], defaultModel:"gemini-3.6-flash" },
   groq: { label:"Groq (fast, free)", keyHint:"gsk_…", keyUrl:"https://console.groq.com/keys",
     models:["llama-3.1-8b-instant","llama-3.3-70b-versatile","gemma2-9b-it"], defaultModel:"llama-3.1-8b-instant" },
   openrouter: { label:"OpenRouter (free models)", keyHint:"sk-or-…", keyUrl:"https://openrouter.ai/keys",
@@ -749,7 +749,7 @@ function providerModel(){
   if (cfg.model && (p.models||[]).indexOf(cfg.model) >= 0) return cfg.model;
   return p.defaultModel;
 }
-const MODEL_FALLBACKS = ["gemini-2.0-flash","gemini-2.0-flash-001","gemini-flash-latest","gemini-2.5-flash","gemini-1.5-flash","gemini-1.5-flash-latest","gemini-1.5-flash-8b","gemini-pro-latest"];
+const MODEL_FALLBACKS = ["gemini-3.6-flash","gemini-3.7-flash","gemini-3.5-flash","gemini-2.5-flash","gemini-2.5-pro"];
 let discoveredModels = null; // cache of models the key can actually use (provider-specific)
 let discoveredFor = null;    // which provider the cache belongs to
 async function discoverModels(){
@@ -761,9 +761,16 @@ async function discoverModels(){
       if (!res.ok) return null;
       const data = await res.json();
       names = (data.models||[])
-        .filter(m => (m.supportedGenerationMethods||[]).includes("generateContent") && /flash|pro/i.test(m.name))
-        .map(m => m.name.replace(/^models\//,""));
-      names.sort((a,b)=> (/flash/i.test(b)?1:0) - (/flash/i.test(a)?1:0)); // flash first
+        .map(m => (m.name||"").replace(/^models\//,""))
+        .filter(n => n && /(flash|pro)/i.test(n))
+        // exclude non-chat / special variants that can't take a text prompt or hang ("-latest" aliases stall)
+        .filter(n => !/(image|tts|audio|vision|embed|banana|lyria|omni|deep-research|nano|-latest|preview|-lite|thinking)/i.test(n));
+      const ver = n => { const m = n.match(/(\d+(?:\.\d+)?)/); return m ? parseFloat(m[1]) : 0; };
+      names.sort((a,b)=>{
+        const fa = /flash/i.test(a)?1:0, fb = /flash/i.test(b)?1:0;
+        if (fa !== fb) return fb - fa;        // flash before pro
+        return ver(b) - ver(a);               // newest version first
+      });
     } else if (cfg.provider === "groq" || cfg.provider === "openrouter") {
       const url = cfg.provider === "groq" ? "https://api.groq.com/openai/v1/models" : "https://openrouter.ai/api/v1/models";
       const res = await fetch(url, { headers: { "Authorization":"Bearer " + cfg.apiKey } });
@@ -1580,9 +1587,17 @@ async function callOpenAICompatible(promptText){
 }
 
 async function callGemini(userText, promptOverride){
-  let models = [providerModel()].concat(MODEL_FALLBACKS.filter(m=>m!==providerModel()));
-  let triedDiscovery = false;
+  // Prefer the LIVE model list (what this key can actually use today) so we never call a retired model.
+  const live = await discoverModels();
+  let models;
+  if (live && live.length) {
+    models = (cfg.model && live.indexOf(cfg.model) >= 0) ? [cfg.model].concat(live.filter(m=>m!==cfg.model)) : live.slice();
+  } else {
+    models = [providerModel()].concat(MODEL_FALLBACKS.filter(m=>m!==providerModel()));
+  }
+  models = models.slice(0, 6); // cap attempts
   let lastErr = new Error("unknown");
+  let timeouts = 0;
   const sleep = ms => new Promise(r=>setTimeout(r, ms));
   const promptText = promptOverride || buildPrompt(userText);
   for (let mi = 0; mi < models.length; mi++) {
@@ -1591,7 +1606,7 @@ async function callGemini(userText, promptOverride){
     // Retry transient errors (503 overloaded / 500) up to 3 attempts with backoff
     for (let attempt = 0; attempt < 3; attempt++) {
       const ctrl = new AbortController();
-      const timer = setTimeout(()=>ctrl.abort(), 25000);
+      const timer = setTimeout(()=>ctrl.abort(), 15000);
       try {
         const res = await fetch(url, {
           method: "POST",
@@ -1605,11 +1620,7 @@ async function callGemini(userText, promptOverride){
         clearTimeout(timer);
         if (res.status === 404) { lastErr = new Error("API 404 (model not found)"); break; } // try next model
         if (res.status === 429) { throw new Error("429 rate limit — free quota reached"); }
-        if (res.status === 503 || res.status === 500) {
-          lastErr = new Error("API " + res.status + " (Google servers busy)");
-          if (attempt < 2) { await sleep(700 * (attempt + 1)); continue; } // retry same model
-          break; // give up on this model, try next
-        }
+        if (res.status === 503 || res.status === 500) { lastErr = new Error("API " + res.status + " (Google servers busy)"); break; } // overloaded — fail over to the next model right away
         if (!res.ok) throw new Error("API " + res.status);
         const data = await res.json();
         const txt = data?.candidates?.[0]?.content?.parts?.[0]?.text;
@@ -1622,16 +1633,15 @@ async function callGemini(userText, promptOverride){
         clearTimeout(timer);
         lastErr = e;
         const msg = String(e.message);
-        if (e.name === "AbortError") { throw new Error("timeout"); } // slow provider — stop, don't burn quota walking every model
+        if (e.name === "AbortError") {
+          // One model hung. Try the next model once, but stop after 2 timeouts so a bad model can't stall the demo or drain quota.
+          timeouts++;
+          if (timeouts >= 2) { throw new Error("timeout"); }
+          break; // next model
+        }
         if (msg.indexOf("404") !== -1 || msg.indexOf("503") !== -1 || msg.indexOf("500") !== -1) break; // move to next model
         throw e; // 429, bad key, parse errors etc. — stop
       }
-    }
-    // If we've exhausted the hardcoded list on 404s, ask the API which models this key actually supports.
-    if (mi === models.length - 1 && !triedDiscovery && /404/.test(String(lastErr.message))) {
-      triedDiscovery = true;
-      const found = await discoverModels();
-      if (found && found.length) { models = models.concat(found.filter(m=>models.indexOf(m)===-1)); }
     }
   }
   throw lastErr;
