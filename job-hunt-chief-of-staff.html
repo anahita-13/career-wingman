@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Job Hunt Chief of Staff</title>
+<script>
+  (() => {
+    const param = new URLSearchParams(window.location.search).get("scoutTheme");
+    const theme =
+      param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", theme);
+  })();
+</script>
+<style>
+:root {
+  color-scheme: light;
+  --cp-bg: #f7f4ef;
+  --cp-bg-elevated: #fcfbf8;
+  --cp-surface: #ffffff;
+  --cp-surface-soft: #f5f5f5;
+  --cp-border: #dedede;
+  --cp-border-strong: #919191;
+  --cp-text: #242424;
+  --cp-text-muted: #5c5c5c;
+  --cp-text-soft: #6f6f6f;
+  --cp-accent: #b11f4b;
+  --cp-accent-hover: #9a1a41;
+  --cp-accent-soft: rgba(177, 31, 75, 0.08);
+  --cp-accent-fg: #ffffff;
+  --cp-success: #16a34a;
+  --cp-danger: #dc2626;
+  --cp-warning: #f59e0b;
+  --cp-link: #0078d4;
+  --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+  --cp-overlay: rgba(255, 255, 255, 0.8);
+  --cp-panel: rgba(255, 255, 255, 0.86);
+  --cp-panel-strong: rgba(255, 255, 255, 0.96);
+  --cp-sheen: rgba(255, 255, 255, 0.55);
+  --cp-highlight: rgba(177, 31, 75, 0.12);
+}
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --cp-bg: #3d3b3a;
+  --cp-bg-elevated: #343231;
+  --cp-surface: #292929;
+  --cp-surface-soft: #2e2e2e;
+  --cp-border: #474747;
+  --cp-border-strong: #5f5f5f;
+  --cp-text: #dedede;
+  --cp-text-muted: #919191;
+  --cp-text-soft: #b0b0b0;
+  --cp-accent: #fd8ea1;
+  --cp-accent-hover: #fb7b91;
+  --cp-accent-soft: rgba(253, 142, 161, 0.14);
+  --cp-accent-fg: #1a1a1a;
+  --cp-success: #4ade80;
+  --cp-danger: #f87171;
+  --cp-warning: #fbbf24;
+  --cp-link: #4da6ff;
+  --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+  --cp-overlay: rgba(41, 41, 41, 0.88);
+  --cp-panel: rgba(41, 41, 41, 0.72);
+  --cp-panel-strong: rgba(41, 41, 41, 0.96);
+  --cp-sheen: rgba(255, 255, 255, 0.04);
+  --cp-highlight: rgba(253, 142, 161, 0.12);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--cp-bg);
+  color: var(--cp-text);
+  font-family: "Segoe UI", Aptos, Calibri, -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 15px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+.wrap { max-width: 1240px; margin: 0 auto; padding: 20px 22px 60px; }
+
+/* Header */
+header.app {
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  padding-bottom: 16px; margin-bottom: 18px;
+  border-bottom: 1px solid var(--cp-border);
+}
+.brand { display: flex; align-items: center; gap: 12px; }
+.brand-mark {
+  width: 40px; height: 40px; border-radius: 10px;
+  background: var(--cp-accent); color: var(--cp-accent-fg);
+  display: grid; place-items: center; font-weight: 700; font-size: 18px;
+  box-shadow: 0 0 2px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.14);
+}
+.brand h1 { font-size: 19px; margin: 0; line-height: 1.1; }
+.brand p { font-size: 12.5px; margin: 2px 0 0; color: var(--cp-text-muted); }
+.header-actions { margin-left: auto; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+.btn {
+  font-family: inherit; font-size: 13px; font-weight: 600;
+  border-radius: 0.625rem; border: 1px solid var(--cp-border);
+  background: var(--cp-surface); color: var(--cp-text);
+  padding: 8px 13px; cursor: pointer; transition: all .12s ease;
+  display: inline-flex; align-items: center; gap: 7px;
+}
+.btn:hover { border-color: var(--cp-border-strong); }
+.btn-primary { background: var(--cp-accent); border-color: var(--cp-accent); color: var(--cp-accent-fg); }
+.btn-primary:hover { background: var(--cp-accent-hover); border-color: var(--cp-accent-hover); }
+.btn-ghost { background: transparent; }
+.btn-danger { color: var(--cp-danger); }
+.btn-sm { padding: 5px 10px; font-size: 12px; }
+
+.toggle {
+  display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px;
+  color: var(--cp-text-muted); user-select: none; cursor: pointer;
+  padding: 6px 11px; border: 1px solid var(--cp-border); border-radius: 999px;
+  background: var(--cp-surface);
+}
+.toggle .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--cp-success); }
+.toggle.safe .dot { background: var(--cp-warning); }
+.toggle strong { color: var(--cp-text); font-weight: 600; }
+
+/* Layout */
+.pipeline-row {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 18px;
+}
+.grid-main { display: grid; grid-template-columns: 1.5fr 1fr; gap: 18px; align-items: start; }
+@media (max-width: 900px) {
+  .pipeline-row { grid-template-columns: 1fr; }
+  .grid-main { grid-template-columns: 1fr; }
+}
+
+.card {
+  background: var(--cp-surface); border: 1px solid var(--cp-border);
+  border-radius: 16px; padding: 16px;
+  box-shadow: 0 0 2px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.14);
+}
+.section-title {
+  font-size: 12px; text-transform: uppercase; letter-spacing: .06em;
+  color: var(--cp-text-soft); font-weight: 700; margin: 0 0 12px;
+  display: flex; align-items: center; gap: 8px;
+}
+.section-title .count {
+  background: var(--cp-surface-soft); border: 1px solid var(--cp-border);
+  border-radius: 999px; padding: 1px 8px; font-size: 11px; letter-spacing: 0;
+  text-transform: none; color: var(--cp-text-muted);
+}
+
+/* Pipeline cards */
+.pcard { position: relative; overflow: hidden; }
+.pcard .co { font-size: 16px; font-weight: 700; margin: 0; }
+.pcard .role { font-size: 13px; color: var(--cp-text-muted); margin: 2px 0 12px; }
+.stage-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px;
+  background: var(--cp-accent-soft); color: var(--cp-accent);
+  border: 1px solid transparent;
+}
+.stage-badge.flash { animation: flash 1.1s ease; }
+@keyframes flash {
+  0% { background: var(--cp-highlight); box-shadow: 0 0 0 6px var(--cp-highlight); }
+  100% { background: var(--cp-accent-soft); box-shadow: 0 0 0 0 transparent; }
+}
+.pcard .note { font-size: 12.5px; color: var(--cp-text-soft); margin-top: 12px; line-height: 1.5; }
+.pcard .track { display: flex; gap: 4px; margin-top: 14px; }
+.pcard .track .seg { height: 4px; flex: 1; border-radius: 2px; background: var(--cp-border); }
+.pcard .track .seg.on { background: var(--cp-accent); }
+
+/* Assistant */
+.assistant { display: flex; flex-direction: column; min-height: 460px; }
+.chat-log { display: flex; flex-direction: column; gap: 12px; margin-bottom: 14px; }
+.msg { max-width: 92%; padding: 11px 14px; border-radius: 14px; font-size: 14px; line-height: 1.5; }
+.msg.user { align-self: flex-end; background: var(--cp-accent); color: var(--cp-accent-fg); border-bottom-right-radius: 4px; }
+.msg.bot { align-self: flex-start; background: var(--cp-surface-soft); border: 1px solid var(--cp-border); border-bottom-left-radius: 4px; }
+.msg.bot .who { font-size: 11px; font-weight: 700; color: var(--cp-text-soft); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 4px; }
+
+.thinking { display: inline-flex; gap: 4px; align-items: center; }
+.thinking span { width: 6px; height: 6px; border-radius: 50%; background: var(--cp-text-soft); animation: bounce 1s infinite; }
+.thinking span:nth-child(2){ animation-delay: .15s; } .thinking span:nth-child(3){ animation-delay: .3s; }
+@keyframes bounce { 0%,60%,100%{ transform: translateY(0); opacity:.5 } 30%{ transform: translateY(-4px); opacity:1 } }
+
+/* Proposal */
+.proposal { border: 1.5px solid var(--cp-accent); border-radius: 14px; padding: 14px; background: var(--cp-accent-soft); }
+.proposal h4 { margin: 0 0 4px; font-size: 14px; }
+.proposal .summary { font-size: 13px; color: var(--cp-text-muted); margin: 0 0 12px; }
+.action-row {
+  display: flex; align-items: flex-start; gap: 10px; padding: 9px 11px; margin-bottom: 8px;
+  background: var(--cp-surface); border: 1px solid var(--cp-border); border-radius: 10px;
+}
+.action-row.off { opacity: .45; }
+.action-row .ico { font-size: 15px; line-height: 1.4; }
+.action-row .body { flex: 1; min-width: 0; }
+.action-row .kind { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--cp-accent); }
+.action-row .txt { font-size: 13.5px; margin-top: 1px; }
+.action-row input.edit {
+  width: 100%; font-family: inherit; font-size: 13.5px; margin-top: 2px;
+  border: 1px solid var(--cp-border); border-radius: 8px; padding: 5px 8px;
+  background: var(--cp-bg-elevated); color: var(--cp-text);
+}
+.action-row .chk { margin-top: 3px; cursor: pointer; width: 15px; height: 15px; accent-color: var(--cp-accent); }
+.followup-ask { margin: 6px 0 10px; padding: 11px; border: 1px dashed var(--cp-accent); border-radius: 10px; background: var(--cp-surface); }
+.advice-row { background: var(--cp-bg-elevated); }
+.advice-txt { line-height: 1.6; color: var(--cp-text); }
+.followup-ask label { font-size: 12.5px; font-weight: 600; display: block; margin-bottom: 6px; }
+.followup-ask textarea {
+  width: 100%; min-height: 60px; resize: vertical; font-family: inherit; font-size: 13px;
+  border: 1px solid var(--cp-border); border-radius: 8px; padding: 8px; background: var(--cp-bg-elevated); color: var(--cp-text);
+}
+.proposal-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+
+/* Composer */
+.composer { margin-top: auto; }
+.chips { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 9px; }
+.chip {
+  font-size: 12px; padding: 5px 11px; border-radius: 999px; cursor: pointer;
+  border: 1px solid var(--cp-border); background: var(--cp-surface-soft); color: var(--cp-text-muted);
+}
+.chip:hover { border-color: var(--cp-accent); color: var(--cp-accent); }
+.composer-box { display: flex; gap: 8px; align-items: flex-end; }
+.composer-box textarea {
+  flex: 1; min-height: 48px; max-height: 140px; resize: none; font-family: inherit; font-size: 14px;
+  border: 1px solid var(--cp-border); border-radius: 12px; padding: 11px 12px;
+  background: var(--cp-surface); color: var(--cp-text);
+}
+.composer-box textarea:focus { outline: none; border-color: var(--cp-accent); }
+
+/* Tasks */
+.task { display: flex; align-items: flex-start; gap: 9px; padding: 9px 0; border-bottom: 1px solid var(--cp-border); }
+.task:last-child { border-bottom: none; }
+.task input { margin-top: 2px; width: 15px; height: 15px; accent-color: var(--cp-accent); cursor: pointer; }
+.task .t-body { flex: 1; min-width: 0; }
+.task .t-title { font-size: 13.5px; }
+.task.done .t-title { text-decoration: line-through; color: var(--cp-text-soft); }
+.task .t-meta { font-size: 11.5px; color: var(--cp-text-soft); margin-top: 2px; display: flex; gap: 8px; flex-wrap: wrap; }
+.tag { font-size: 10.5px; font-weight: 600; padding: 1px 7px; border-radius: 999px; background: var(--cp-surface-soft); border: 1px solid var(--cp-border); color: var(--cp-text-muted); }
+.tag.new { color: var(--cp-success); border-color: var(--cp-success); }
+
+/* Calendar */
+.cal-item { display: flex; gap: 12px; align-items: center; padding: 11px; border: 1px solid var(--cp-border); border-radius: 12px; background: var(--cp-surface-soft); }
+.cal-date { text-align: center; min-width: 46px; }
+.cal-date .m { font-size: 10.5px; font-weight: 700; text-transform: uppercase; color: var(--cp-accent); letter-spacing: .05em; }
+.cal-date .d { font-size: 20px; font-weight: 700; line-height: 1; }
+.cal-item .c-title { font-size: 13.5px; font-weight: 600; }
+.cal-item .c-time { font-size: 12px; color: var(--cp-text-muted); margin-top: 2px; }
+.cal-item.hi { border-color: var(--cp-accent); box-shadow: 0 0 0 3px var(--cp-highlight); }
+
+.sub { font-size: 12px; color: var(--cp-text-soft); margin-top: 10px; }
+.gap { height: 18px; }
+
+/* Modal */
+.modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: none; place-items: center; z-index: 50; padding: 20px; }
+.modal-bg.open { display: grid; }
+.modal { background: var(--cp-bg-elevated); border: 1px solid var(--cp-border); border-radius: 16px; padding: 22px; max-width: 480px; width: 100%; box-shadow: var(--cp-shadow); }
+.modal h3 { margin: 0 0 6px; font-size: 17px; }
+.modal p { font-size: 13px; color: var(--cp-text-muted); margin: 0 0 14px; }
+.field { margin-bottom: 14px; }
+.field label { font-size: 12.5px; font-weight: 600; display: block; margin-bottom: 6px; }
+.field input, .field select {
+  width: 100%; font-family: inherit; font-size: 14px; padding: 9px 11px;
+  border: 1px solid var(--cp-border); border-radius: 10px; background: var(--cp-surface); color: var(--cp-text);
+}
+.modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 4px; }
+.status-line { font-size: 11.5px; color: var(--cp-text-soft); margin-top: 10px; }
+a { color: var(--cp-link); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="app">
+    <div class="brand">
+      <div class="brand-mark">CS</div>
+      <div>
+        <h1>Job Hunt Chief of Staff</h1>
+        <p>My PM search — pipeline, tasks &amp; scheduling, run by an AI copilot I approve.</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <div class="toggle" id="modeToggle" title="Toggle live AI vs. safe mode">
+        <span class="dot"></span><span>Live AI: <strong id="modeLabel">Gemini</strong></span>
+      </div>
+      <button class="btn btn-sm" id="keyBtn">API key</button>
+      <button class="btn btn-sm btn-ghost btn-danger" id="resetBtn">Reset demo</button>
+    </div>
+  </header>
+
+  <!-- Pipeline -->
+  <div class="pipeline-row" id="pipeline"></div>
+
+  <!-- Main -->
+  <div class="grid-main">
+    <!-- Assistant -->
+    <div class="card assistant">
+      <div class="section-title">Assistant <span class="count">proposes &middot; you approve</span></div>
+      <div class="chat-log" id="chatLog"></div>
+      <div class="composer">
+        <div class="chips" id="chips"></div>
+        <div class="composer-box">
+          <textarea id="composer" placeholder="Type a messy update in plain English…  e.g. &quot;had a great coffee chat with the Company Y contact&quot;"></textarea>
+          <button class="btn btn-primary" id="sendBtn">Send</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div>
+      <div class="card">
+        <div class="section-title">Tasks <span class="count" id="taskCount">0</span></div>
+        <div id="taskList"></div>
+      </div>
+      <div class="gap"></div>
+      <div class="card">
+        <div class="section-title">Calendar</div>
+        <div id="calList"></div>
+        <div class="sub">Seeded from my real schedule — no login, works offline.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- API key modal -->
+<div class="modal-bg" id="keyModal">
+  <div class="modal">
+    <h3>Live AI — Gemini key</h3>
+    <p>Paste a free Google AI Studio (Gemini) API key to run the assistant live. Leave blank to run in <strong>safe mode</strong> (pre-scripted, never fails). The key stays on this device.</p>
+    <div class="field">
+      <label for="keyInput">Gemini API key</label>
+      <input type="password" id="keyInput" placeholder="AIza…" autocomplete="off" />
+    </div>
+    <div class="field">
+      <label for="modelInput">Model</label>
+      <select id="modelInput">
+        <option value="gemini-2.0-flash">gemini-2.0-flash (recommended)</option>
+        <option value="gemini-2.5-flash">gemini-2.5-flash</option>
+        <option value="gemini-1.5-flash">gemini-1.5-flash</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" id="keyCancel">Cancel</button>
+      <button class="btn btn-primary" id="keySave">Save &amp; use live</button>
+    </div>
+    <div class="status-line" id="keyStatus"></div>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+/* ---------- Seed data (real, anonymized) ---------- */
+const TODAY = new Date("2026-08-26T12:00:00");
+function seed() {
+  return {
+    companies: [
+      { id:"X", name:"Company X", role:"Senior PM", stage:"Applied",
+        steps:["Lead","Applied","Recruiter screen","Interview","Offer"], stepIdx:1,
+        note:"Application submitted — awaiting response." },
+      { id:"Y", name:"Company Y", role:"Target team — PM", stage:"Networking",
+        steps:["Lead","Networking","Referral","Interview","Offer"], stepIdx:1,
+        note:"Referral in play. A contact on a similar team agreed to refer me; follow up in ~1 week. Coffee chat Sep 8." },
+      { id:"Z", name:"Company Z", role:"Role of interest", stage:"Researching",
+        steps:["Researching","Networking","Applied","Interview","Offer"], stepIdx:0,
+        note:"Finding people to coffee-chat about the role." },
+    ],
+    tasks: [
+      { id:t(), title:"Prep questions for Company Y coffee chat", due:"Sep 8", company:"Y", done:false, isNew:false },
+      { id:t(), title:"Find people at Company Z to reach out to", due:"This week", company:"Z", done:false, isNew:false },
+      { id:t(), title:"Nudge Company X (recruiter) if no reply", due:"Sep 2", company:"X", done:false, isNew:false },
+    ],
+    calendar: [
+      { id:t(), title:"Coffee chat — Company Y contact", month:"SEP", day:"8", time:"6:30 PM", hi:false },
+    ],
+  };
+}
+let _id = 1; function t(){ return "id" + (_id++); }
+let state = seed();
+
+/* ---------- Config ---------- */
+const cfg = {
+  apiKey: (function(){ try { return localStorage.getItem("jhcos_key") || ""; } catch(e){ return ""; } })(),
+  model: (function(){ try { return localStorage.getItem("jhcos_model") || "gemini-2.0-flash"; } catch(e){ return "gemini-2.0-flash"; } })(),
+  forceSafe: false,
+};
+
+/* ---------- Render ---------- */
+const $ = (id) => document.getElementById(id);
+
+function renderPipeline() {
+  $("pipeline").innerHTML = state.companies.map(c => {
+    const segs = c.steps.map((s,i) => `<div class="seg ${i<=c.stepIdx?"on":""}"></div>`).join("");
+    return `<div class="card pcard" data-co="${c.id}">
+      <p class="co">${c.name}</p>
+      <p class="role">${esc(c.role)}</p>
+      <span class="stage-badge" data-badge="${c.id}">${esc(c.stage)}</span>
+      <div class="track">${segs}</div>
+      <p class="note">${esc(c.note)}</p>
+    </div>`;
+  }).join("");
+}
+
+function renderTasks() {
+  const open = state.tasks.filter(x=>!x.done).length;
+  $("taskCount").textContent = open + " open";
+  $("taskList").innerHTML = state.tasks.map(tk => `
+    <div class="task ${tk.done?"done":""}">
+      <input type="checkbox" ${tk.done?"checked":""} data-task="${tk.id}" />
+      <div class="t-body">
+        <div class="t-title">${esc(tk.title)}</div>
+        <div class="t-meta">
+          <span class="tag ${tk.isNew?"new":""}">${/^[XYZ]$/.test(String(tk.company))?("Company "+tk.company):esc(tk.company)}</span>
+          ${tk.due?`<span>Due ${esc(tk.due)}</span>`:""}
+          ${tk.isNew?`<span style="color:var(--cp-success)">just added</span>`:""}
+        </div>
+      </div>
+    </div>`).join("") || `<div class="sub">No tasks yet.</div>`;
+  document.querySelectorAll("[data-task]").forEach(el => {
+    el.onchange = () => {
+      const tk = state.tasks.find(x=>x.id===el.dataset.task);
+      if (tk) { tk.done = el.checked; renderTasks(); }
+    };
+  });
+}
+
+function renderCalendar() {
+  $("calList").innerHTML = state.calendar.map(ev => `
+    <div class="cal-item ${ev.hi?"hi":""}">
+      <div class="cal-date"><div class="m">${ev.month}</div><div class="d">${ev.day}</div></div>
+      <div><div class="c-title">${esc(ev.title)}</div><div class="c-time">${esc(ev.time)}</div></div>
+    </div>`).join("");
+}
+
+function renderMode() {
+  const tog = $("modeToggle");
+  const live = !!cfg.apiKey && !cfg.forceSafe;
+  tog.classList.toggle("safe", !live);
+  $("modeLabel").textContent = live ? "Gemini" : "Safe mode";
+}
+
+function renderChips() {
+  const chips = [
+    "Had a great coffee chat with the Company Y contact — he's really into AI, agreed to refer me, wants a follow-up in a week.",
+    "Company X recruiter hasn't replied since I applied.",
+    "Want to find 3 people at Company Z to reach out to this week.",
+  ];
+  $("chips").innerHTML = chips.map((c,i)=>`<span class="chip" data-chip="${i}">${esc(c.length>52?c.slice(0,52)+"…":c)}</span>`).join("");
+  document.querySelectorAll("[data-chip]").forEach(el=>{
+    el.onclick = () => { $("composer").value = chips[+el.dataset.chip]; $("composer").focus(); };
+  });
+}
+
+function esc(s){ return String(s).replace(/[&<>"']/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m])); }
+
+/* ---------- Chat helpers ---------- */
+function addUserMsg(text){
+  const d = document.createElement("div");
+  d.className = "msg user"; d.textContent = text;
+  $("chatLog").appendChild(d); scrollChat();
+}
+function addBotMsg(html){
+  const d = document.createElement("div");
+  d.className = "msg bot";
+  d.innerHTML = `<div class="who">Chief of Staff</div>${html}`;
+  $("chatLog").appendChild(d); scrollChat(); return d;
+}
+function addThinking(){
+  const d = document.createElement("div");
+  d.className = "msg bot";
+  d.innerHTML = `<div class="who">Chief of Staff</div><div class="thinking"><span></span><span></span><span></span></div>`;
+  $("chatLog").appendChild(d); scrollChat(); return d;
+}
+function scrollChat(){ const l=$("chatLog"); l.scrollTop = l.scrollHeight; window.scrollTo(0, document.body.scrollHeight); }
+
+/* ---------- Gemini ---------- */
+function buildPrompt(userText){
+  const stateSummary = state.companies.map(c=>`- ${c.name} (${c.role}): stage "${c.stage}". ${c.note}`).join("\n");
+  const cal = state.calendar.map(e=>`- ${e.title}: ${e.month} ${e.day}, ${e.time}`).join("\n");
+  return `You are "Chief of Staff", an AI copilot that runs a product manager's job search. Today is Wednesday, August 26, 2026.
+You NEVER take actions on your own — you PROPOSE a plan the user approves.
+
+Current pipeline:
+${stateSummary}
+
+Calendar:
+${cal}
+
+The user just sent this messy update:
+"""${userText}"""
+
+Interpret it and propose a concrete, genuinely useful plan — think like a sharp chief of staff, not a to-do echo. Respond with ONLY valid JSON in this exact shape:
+{
+  "reply": "one short friendly sentence acknowledging what you understood",
+  "company": "Company X | Company Y | Company Z | <new role name> | null",
+  "actions": [
+    { "type": "add_company", "name": "MS — Chief of Staff", "role": "Chief of Staff", "stage": "Interested", "text": "Add \\"MS — Chief of Staff\\" to your pipeline (Interested)" },
+    { "type": "advice", "text": "How I'd approach this: 1) decode what the role really rewards, 2) map 2-3 of your PM wins to it, 3) find a warm intro before applying, 4) tailor the resume to their language." },
+    { "type": "stage", "company": "Company Y", "to": "Referral", "text": "Move Company Y to \\"Referral\\"" },
+    { "type": "task", "company": "Y", "due": "Sep 2", "text": "Send follow-up to Company Y contact" },
+    { "type": "calendar", "text": "Your coffee chat with the Company Y contact is Sep 8, 6:30 PM" },
+    { "type": "followup_ask", "text": "What would you like to say in the follow-up?" }
+  ]
+}
+Rules:
+- "type" is one of: "add_company", "advice", "stage", "task", "calendar", "followup_ask".
+- If the user names or links a NEW role/company not already in the pipeline, START with an "add_company" action (invent a short "name" and a sensible starting "stage" like "Interested" or "Researching"), then propose how to pursue it.
+- When the user asks HOW to approach something (a role, an interview, outreach), ALWAYS include ONE "advice" action: 3-5 concrete, tailored, numbered steps of real substance — reference their PM background and the specific role. Never be generic and never just restate their message.
+- Break the approach into 2-4 concrete "task" actions the user can actually check off (e.g. "Research the team's charter & recent launches", "Map your CIBC payments + AWS pipeline wins to this role", "Find a 2nd-degree connection for a warm intro").
+- "company" for stage must be an exact existing company name; for a task use just the letter X/Y/Z, or the new role name for a newly added company.
+- Only include a "stage" action if the update clearly implies progress on an EXISTING pipeline item.
+- Include a "followup_ask" action whenever a follow-up MESSAGE to a person is implied — do NOT write the message yourself, ask the user what they want to say.
+- Keep it to 3-6 actions total. Be specific.
+Return JSON only, no markdown fences.`;
+}
+
+async function callGemini(userText){
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${cfg.model}:generateContent?key=${encodeURIComponent(cfg.apiKey)}`;
+  const ctrl = new AbortController();
+  const timer = setTimeout(()=>ctrl.abort(), 13000);
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      signal: ctrl.signal,
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: buildPrompt(userText) }] }],
+        generationConfig: { temperature: 0.4, responseMimeType: "application/json" }
+      })
+    });
+    clearTimeout(timer);
+    if (!res.ok) throw new Error("API " + res.status);
+    const data = await res.json();
+    const txt = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!txt) throw new Error("empty response");
+    const clean = txt.replace(/^```json\s*/i,"").replace(/```\s*$/,"").trim();
+    const plan = JSON.parse(clean);
+    if (!plan.actions || !Array.isArray(plan.actions)) throw new Error("bad shape");
+    return { plan, live:true };
+  } catch(e) {
+    clearTimeout(timer);
+    throw e;
+  }
+}
+
+/* ---------- Safe mode (scripted) ---------- */
+function safePlan(userText){
+  const s = userText.toLowerCase();
+  const hasLink = /https?:\/\/|careers|apply|job\b|role\b|position|opening/.test(s);
+  const wantsApproach = /approach|how (do|should|would)|suggest|strategy|prepare|prep|tips|advice|go about/.test(s);
+
+  // New role / job link / "how do I approach this role"
+  if (hasLink || wantsApproach) {
+    let roleName = "New role";
+    const m = userText.match(/chief of staff|senior pm|product manager|program manager|principal pm|group pm|director|lead/i);
+    if (m) roleName = m[0].replace(/\b\w/g, c=>c.toUpperCase());
+    const label = roleName === "New role" ? "New role" : roleName;
+    return {
+      reply: `Let's build a real plan of attack for the ${label} role — not just a task.`,
+      company: label,
+      actions: [
+        { type:"add_company", name:label, role:label, stage:"Interested", text:`Add "${label}" to your pipeline (Interested)` },
+        { type:"advice", text:
+          `How I'd approach this:\n`+
+          `1) Decode the role — read the JD twice and list the 4-5 outcomes it's really hired to deliver.\n`+
+          `2) Map your proof — pick 2-3 of your strongest wins (CIBC payments/data platform, AWS CI/CD pipelines, Salesforce passwordless IAM) that match those outcomes.\n`+
+          `3) Warm intro first — find a 2nd-degree connection on/near the team and aim for a referral before applying cold.\n`+
+          `4) Tailor, don't spray — rewrite your resume summary + top bullets in the role's own language.\n`+
+          `5) Prep the narrative — draft 3 STAR stories tied to the top outcomes so screens feel effortless.` },
+        { type:"task", company:label, due:"This week", text:"Read the JD and list the 4-5 real outcomes the role must deliver" },
+        { type:"task", company:label, due:"This week", text:"Map 2-3 of my PM/eng wins to those outcomes" },
+        { type:"task", company:label, due:"This week", text:"Find a 2nd-degree connection for a warm intro / referral" },
+        { type:"followup_ask", text:"Want to draft the intro/referral message now? Type it and I'll save it as a task." },
+      ],
+    };
+  }
+
+  if (s.includes("coffee") || s.includes("refer") || (s.includes("company y")) || s.includes(" y ")) {
+    return {
+      reply: "Got it — that coffee chat with your Company Y contact went well and a referral is on the table.",
+      company: "Company Y",
+      actions: [
+        { type:"stage", company:"Company Y", to:"Referral", text:'Move Company Y from "Networking" to "Referral"' },
+        { type:"task", company:"Y", due:"Sep 2", text:"Send follow-up to Company Y contact (he asked for ~1 week)" },
+        { type:"task", company:"Y", due:"Sep 8", text:"Prep talking points on his AI interests for the coffee chat" },
+        { type:"calendar", text:"You already have the coffee chat booked: Sep 8, 6:30 PM" },
+        { type:"followup_ask", text:"What would you like to say in the follow-up to him?" },
+      ],
+    };
+  }
+  if (s.includes("company x") || s.includes("recruiter") || s.includes("applied") || s.includes(" x ")) {
+    return {
+      reply: "Understood — Company X (your Senior PM application) has gone quiet.",
+      company: "Company X",
+      actions: [
+        { type:"task", company:"X", due:"Sep 2", text:"Send a brief nudge to the Company X recruiter" },
+        { type:"followup_ask", text:"What would you like your nudge note to say?" },
+      ],
+    };
+  }
+  if (s.includes("company z") || s.includes("reach out") || s.includes("find") || s.includes(" z ")) {
+    return {
+      reply: "On it — let's turn Company Z research into concrete outreach.",
+      company: "Company Z",
+      actions: [
+        { type:"task", company:"Z", due:"This week", text:"Shortlist 3 people at Company Z to reach out to" },
+        { type:"task", company:"Z", due:"This week", text:"Draft LinkedIn connection notes (incl. a coffee-chat ask)" },
+      ],
+    };
+  }
+  return {
+    reply: "Here's how I'd turn that into next steps.",
+    company: null,
+    actions: [
+      { type:"advice", text:"I read that as a note to act on. I'd (1) capture it against the right company, (2) decide the single next action, and (3) set a due date so it doesn't slip." },
+      { type:"task", company:"X", due:"This week", text: userText.length>70 ? userText.slice(0,70)+"…" : userText },
+    ],
+  };
+}
+
+/* ---------- Proposal UI ---------- */
+let proposalSeq = 0;
+function renderProposal(plan, container){
+  const pid = "p" + (proposalSeq++);
+  const rows = plan.actions.map((a,i)=>{
+    const ico = { stage:"&#9654;", task:"&#9744;", calendar:"&#128197;", followup_ask:"&#9997;", add_company:"&#10133;", advice:"&#128161;" }[a.type] || "&#8226;";
+    const kind = { stage:"Update stage", task:"Add task", calendar:"Calendar", followup_ask:"Ask me", add_company:"Add to pipeline", advice:"How to approach" }[a.type] || "Action";
+    if (a.type === "followup_ask") {
+      return `<div class="followup-ask" data-i="${i}">
+        <label>${esc(a.text)}</label>
+        <textarea data-followup="${i}" placeholder="Type your follow-up in your own words — I'll save it as a task, I won't send anything."></textarea>
+      </div>`;
+    }
+    if (a.type === "advice") {
+      return `<div class="action-row advice-row" data-i="${i}">
+        <span class="ico">${ico}</span>
+        <div class="body">
+          <div class="kind">${kind}</div>
+          <div class="txt advice-txt">${esc(a.text).replace(/\n/g,"<br>")}</div>
+        </div>
+      </div>`;
+    }
+    return `<div class="action-row" data-i="${i}">
+      <input type="checkbox" class="chk" data-chk="${i}" checked />
+      <span class="ico">${ico}</span>
+      <div class="body">
+        <div class="kind">${kind}</div>
+        <div class="txt"><span class="txt-view" data-view="${i}">${esc(a.text)}</span></div>
+      </div>
+    </div>`;
+  }).join("");
+
+  container.innerHTML = `<div class="who">Chief of Staff</div>
+    <div style="margin-bottom:10px">${esc(plan.reply || "Here's my proposed plan:")}</div>
+    <div class="proposal" data-pid="${pid}">
+      <h4>Proposed plan${plan.company?` &middot; ${esc(plan.company)}`:""}</h4>
+      <p class="summary">Nothing changes until you approve. You can tweak or cancel.</p>
+      ${rows}
+      <div class="proposal-actions">
+        <button class="btn btn-primary btn-sm" data-act="approve">Approve</button>
+        <button class="btn btn-sm" data-act="tweak">Tweak</button>
+        <button class="btn btn-sm btn-ghost btn-danger" data-act="cancel">Cancel</button>
+      </div>
+    </div>`;
+  scrollChat();
+
+  const propEl = container.querySelector(".proposal");
+  propEl.querySelector('[data-act="approve"]').onclick = () => applyPlan(plan, propEl);
+  propEl.querySelector('[data-act="cancel"]').onclick = () => {
+    propEl.innerHTML = `<span class="sub">Cancelled — nothing changed.</span>`;
+  };
+  propEl.querySelector('[data-act="tweak"]').onclick = () => {
+    propEl.querySelectorAll(".txt-view").forEach(sp=>{
+      const i = sp.dataset.view;
+      const val = plan.actions[i].text;
+      sp.outerHTML = `<input class="edit" data-edit="${i}" value="${esc(val)}" />`;
+    });
+    propEl.querySelector('[data-act="tweak"]').textContent = "Editing…";
+  };
+}
+
+function applyPlan(plan, propEl){
+  let followText = "";
+  const fEl = propEl.querySelector("[data-followup]");
+  if (fEl) followText = fEl.value.trim();
+
+  plan.actions.forEach((a,i)=>{
+    const chk = propEl.querySelector(`[data-chk="${i}"]`);
+    if (chk && !chk.checked) return;
+    const editEl = propEl.querySelector(`[data-edit="${i}"]`);
+    const text = editEl ? editEl.value.trim() : a.text;
+
+    if (a.type === "add_company") {
+      const exists = state.companies.find(c => c.name.toLowerCase() === String(a.name||"").toLowerCase());
+      if (!exists && a.name) {
+        const startStage = a.stage || "Interested";
+        const steps = ["Interested","Researching","Applied","Interview","Offer"];
+        let sIdx = steps.findIndex(s => s.toLowerCase() === startStage.toLowerCase());
+        if (sIdx < 0) { steps.unshift(startStage); sIdx = 0; }
+        state.companies.push({
+          id: a.name, name: a.name, role: a.role || a.name,
+          stage: startStage, steps, stepIdx: sIdx,
+          note: "Added from your update — build the plan of attack.", isNew: true
+        });
+      }
+    } else if (a.type === "advice") {
+      /* informational only — nothing to apply */
+    } else if (a.type === "stage") {
+      const co = state.companies.find(c => c.name === a.company || c.id === a.company);
+      if (co) {
+        const idx = co.steps.findIndex(s => s.toLowerCase() === String(a.to||"").toLowerCase());
+        co.stage = a.to || co.stage;
+        if (idx >= 0) co.stepIdx = idx; else co.stepIdx = Math.min(co.stepIdx+1, co.steps.length-1);
+        flashBadge(co.id);
+      }
+    } else if (a.type === "task") {
+      state.tasks.unshift({ id:t(), title:text, due:a.due||"", company:a.company||"X", done:false, isNew:true });
+    } else if (a.type === "calendar") {
+      const ev = state.calendar.find(e=>true);
+      if (ev) ev.hi = true;
+    } else if (a.type === "followup_ask") {
+      if (followText) {
+        state.tasks.unshift({ id:t(), title:'Follow-up drafted: "'+ (followText.length>70?followText.slice(0,70)+"…":followText) +'"', due:a.due||"", company:(plan.company||"Y").replace("Company ","").trim().charAt(0)||"Y", done:false, isNew:true });
+      }
+    }
+  });
+
+  renderPipeline(); renderTasks(); renderCalendar();
+  const applied = propEl.querySelectorAll(".action-row .chk:checked").length + (followText?1:0);
+  propEl.innerHTML = `<span class="sub" style="color:var(--cp-success)">&#10003; Approved — applied ${applied} update${applied===1?"":"s"} to your pipeline, tasks &amp; calendar.</span>`;
+  setTimeout(()=>{ state.tasks.forEach(x=>x.isNew=false); renderTasks(); }, 4000);
+}
+
+function flashBadge(id){
+  renderPipeline();
+  const b = document.querySelector(`[data-badge="${id}"]`);
+  if (b) { b.classList.add("flash"); }
+}
+
+/* ---------- Send flow ---------- */
+let busy = false;
+async function handleSend(){
+  const text = $("composer").value.trim();
+  if (!text || busy) return;
+  busy = true; $("sendBtn").disabled = true;
+  addUserMsg(text);
+  $("composer").value = "";
+  const thinking = addThinking();
+
+  const live = !!cfg.apiKey && !cfg.forceSafe;
+  let plan, usedLive = false, failReason = "";
+  if (live) {
+    try { const r = await callGemini(text); plan = r.plan; usedLive = true; }
+    catch(e) { plan = safePlan(text); failReason = (e && e.message) ? e.message : "network error"; }
+  } else {
+    await new Promise(r=>setTimeout(r, 500));
+    plan = safePlan(text);
+  }
+  thinking.remove();
+  if (live && !usedLive) {
+    addBotMsg(`<span style="color:var(--cp-warning)">&#9888; Live AI didn't respond (${esc(failReason)}) — used safe mode instead. Tip: Gemini is blocked on <code>file://</code> pages; run this from http/https (localhost or GitHub Pages) for live answers.</span>`);
+  } else if (usedLive) {
+    addBotMsg(`<span style="color:var(--cp-success)">&#9679; Live Gemini responded.</span>`);
+  }
+  const c = addBotMsg("");
+  renderProposal(plan, c);
+  busy = false; $("sendBtn").disabled = false;
+}
+
+/* ---------- Modal / key ---------- */
+function openKey(){
+  $("keyInput").value = cfg.apiKey;
+  $("modelInput").value = cfg.model;
+  $("keyStatus").textContent = cfg.apiKey ? "Live mode active." : "No key set — running in safe mode.";
+  $("keyModal").classList.add("open");
+}
+function closeKey(){ $("keyModal").classList.remove("open"); }
+
+/* ---------- Wire up ---------- */
+function init(){
+  renderPipeline(); renderTasks(); renderCalendar(); renderMode(); renderChips();
+  addBotMsg("Hi Anahita — I'm tracking Company X, Y and Z. Tell me what happened in plain English and I'll propose the next moves. I never change anything without your approval.");
+
+  $("sendBtn").onclick = handleSend;
+  $("composer").addEventListener("keydown", e=>{
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
+  });
+  $("keyBtn").onclick = openKey;
+  $("keyCancel").onclick = closeKey;
+  $("keySave").onclick = () => {
+    cfg.apiKey = $("keyInput").value.trim();
+    cfg.model = $("modelInput").value;
+    try { localStorage.setItem("jhcos_key", cfg.apiKey); localStorage.setItem("jhcos_model", cfg.model); } catch(e){}
+    cfg.forceSafe = false;
+    renderMode(); closeKey();
+  };
+  $("modeToggle").onclick = () => {
+    if (!cfg.apiKey) { openKey(); return; }
+    cfg.forceSafe = !cfg.forceSafe; renderMode();
+  };
+  $("resetBtn").onclick = () => {
+    state = seed();
+    $("chatLog").innerHTML = "";
+    renderPipeline(); renderTasks(); renderCalendar();
+    addBotMsg("Demo reset. Company X, Y and Z are back to their starting state. What happened?");
+  };
+  $("keyModal").addEventListener("click", e=>{ if (e.target === $("keyModal")) closeKey(); });
+}
+init();
+</script>
+</body>
+</html>
