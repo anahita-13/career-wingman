@@ -105,8 +105,26 @@ header.app {
 .avatar-opt:hover { border-color: var(--cp-accent); background: var(--cp-accent-soft); }
 .avatar-opt.sel { border-color: var(--cp-accent); background: var(--cp-accent-soft); }
 .brand h1 { font-size: 19px; margin: 0; line-height: 1.1; }
+.app-title-wrap { display: inline-flex; align-items: center; gap: 8px; }
+.title-edit { font-size: 13px; color: var(--cp-text-soft); cursor: pointer; opacity: 0; transition: opacity .12s; }
+.app-title-wrap:hover .title-edit { opacity: 1; }
+.title-edit:hover { color: var(--cp-accent); }
 .brand p { font-size: 12.5px; margin: 2px 0 0; color: var(--cp-text-muted); }
 .header-actions { margin-left: auto; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.settings-wrap { position: relative; }
+.settings-menu {
+  position: absolute; top: 40px; right: 0; z-index: 40; display: none;
+  background: var(--cp-bg-elevated); border: 1px solid var(--cp-border); border-radius: 10px;
+  padding: 6px; box-shadow: var(--cp-shadow); min-width: 180px;
+}
+.settings-menu.open { display: block; }
+.settings-item {
+  display: block; width: 100%; text-align: left; font-family: inherit; font-size: 13px;
+  background: transparent; border: none; color: var(--cp-text); padding: 8px 10px; border-radius: 7px; cursor: pointer;
+}
+.settings-item:hover { background: var(--cp-surface-soft); }
+.settings-item.danger { color: var(--cp-danger); }
+.settings-sep { height: 1px; background: var(--cp-border); margin: 5px 4px; }
 
 .btn {
   font-family: inherit; font-size: 13px; font-weight: 600;
@@ -392,7 +410,7 @@ a { color: var(--cp-link); }
         <div style="margin-top:10px;text-align:right"><button class="btn btn-sm" id="avatarReset">Reset to CS</button></div>
       </div>
       <div>
-        <h1>Job Hunt Chief of Staff</h1>
+        <h1 class="app-title-wrap"><span id="appTitle">Job Hunt Chief of Staff</span> <span class="title-edit" id="titleEdit" title="Edit your name">&#9998;</span></h1>
         <p>My PM search — pipeline, tasks &amp; scheduling, run by an AI copilot I approve.</p>
       </div>
     </div>
@@ -401,9 +419,15 @@ a { color: var(--cp-link); }
       <div class="toggle" id="modeToggle" title="Toggle live AI vs. safe mode">
         <span class="dot"></span><span>Live AI: <strong id="modeLabel">Gemini</strong></span>
       </div>
-      <button class="btn btn-sm" id="keyBtn">API key</button>
-      <button class="btn btn-sm" id="syncBtn">Sync</button>
-      <button class="btn btn-sm btn-ghost btn-danger" id="resetBtn">Reset</button>
+      <div class="settings-wrap">
+        <button class="btn btn-sm" id="settingsBtn" title="Settings" aria-haspopup="true">&#9881; Settings</button>
+        <div class="settings-menu" id="settingsMenu">
+          <button class="settings-item" id="keyBtn">&#128273; API key</button>
+          <button class="settings-item" id="syncBtn">&#8635; Sync</button>
+          <div class="settings-sep"></div>
+          <button class="settings-item danger" id="resetBtn">&#9851; Reset demo data</button>
+        </div>
+      </div>
     </div>
   </header>
 
@@ -543,7 +567,7 @@ function t(){ return "id" + Date.now().toString(36) + Math.random().toString(36)
 
 function example() {
   return {
-    profile: { name: "" },
+    profile: { name: "Anahita" },
     companies: [
       { id:t(), name:"Company X", role:"Senior PM", stage:"Applied",
         steps:["Lead","Applied","Recruiter screen","Interview","Offer"], stepIdx:1,
@@ -1543,6 +1567,7 @@ async function handleSend(){
 
 /* ---------- Modal / key ---------- */
 function openKey(){
+  const sm = $("settingsMenu"); if (sm) sm.classList.remove("open");
   $("keyInput").value = cfg.apiKey;
   $("modelInput").value = cfg.model;
   $("proxyInput").value = cfg.proxyUrl;
@@ -1552,6 +1577,7 @@ function openKey(){
 function closeKey(){ $("keyModal").classList.remove("open"); }
 
 function openSync(){
+  const sm = $("settingsMenu"); if (sm) sm.classList.remove("open");
   $("syncUrlInput").value = cfg.syncUrl;
   $("syncCodeInput").value = cfg.syncCode;
   $("syncAutoInput").checked = cfg.syncAuto;
@@ -1570,11 +1596,14 @@ function saveSyncCfg(){
 }
 function closeSync(){ $("syncModal").classList.remove("open"); }
 
+function titleCase(s){ return String(s||"").trim().replace(/\S+/g, w => w.charAt(0).toUpperCase() + w.slice(1)); }
 function renderAssistantName(){
+  const nm = titleCase(state.profile.name);
   const el = $("assistantName");
-  if (!el) return;
-  const nm = (state.profile.name||"").trim();
-  el.textContent = nm ? `${nm}'s Chief of Staff` : "Your Chief of Staff";
+  if (el) el.textContent = nm ? `${nm}'s Chief of Staff` : "Your Chief of Staff";
+  const title = $("appTitle");
+  if (title) title.textContent = nm ? `${nm}'s Job Hunt Chief of Staff` : "Job Hunt Chief of Staff";
+  try { document.title = nm ? `${nm}'s Job Hunt Chief of Staff` : "Job Hunt Chief of Staff"; } catch(e){}
 }
 
 const AVATARS_PEOPLE = ["🧑‍💼","👩‍💼","👨‍💼","🧑‍💻","👩‍💻","👨‍💻","🦸","🦸‍♀️","🧑‍🎓","👩‍🎓","🕵️","🧑‍🚀","🤖","🧠"];
@@ -1614,6 +1643,11 @@ function init(){
   });
   $("keyBtn").onclick = openKey;
   $("brandMark").onclick = (e) => { e.stopPropagation(); $("avatarPop").classList.toggle("open"); };
+  $("settingsBtn").onclick = (e) => { e.stopPropagation(); $("settingsMenu").classList.toggle("open"); };
+  document.addEventListener("click", (e) => {
+    const m = $("settingsMenu");
+    if (m.classList.contains("open") && !m.contains(e.target) && e.target !== $("settingsBtn")) m.classList.remove("open");
+  });
   $("avatarReset").onclick = () => { state.profile.avatar = ""; saveState(); renderAvatar(); buildAvatarPicker(); $("avatarPop").classList.remove("open"); };
   document.addEventListener("click", (e) => {
     const pop = $("avatarPop");
@@ -1621,6 +1655,7 @@ function init(){
   });
   $("assistantName").onclick = () => askName(false);
   $("editNameHint").onclick = () => askName(false);
+  $("titleEdit").onclick = () => askName(false);
   $("keyCancel").onclick = closeKey;
   $("keySave").onclick = () => {
     cfg.apiKey = $("keyInput").value.trim();
@@ -1639,6 +1674,7 @@ function init(){
     cfg.forceSafe = !cfg.forceSafe; renderMode();
   };
   $("resetBtn").onclick = () => {
+    $("settingsMenu").classList.remove("open");
     if (!confirm("Reset to the example pipeline? This replaces your current data on this device.")) return;
     const nm = state.profile.name;
     state = example(); state.profile.name = nm;
