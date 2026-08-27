@@ -92,6 +92,12 @@ header.app {
   cursor: pointer; user-select: none; position: relative;
 }
 .brand-mark:hover { filter: brightness(1.05); }
+.brand-mark::after {
+  content: "\270E"; position: absolute; inset: 0; display: grid; place-items: center;
+  background: rgba(0,0,0,0.45); color: #fff; font-size: 16px; border-radius: 10px;
+  opacity: 0; transition: opacity .12s;
+}
+.brand-mark:hover::after { opacity: 1; }
 .brand-mark.emoji { background: var(--cp-surface); font-size: 24px; }
 .avatar-pop {
   position: absolute; top: 48px; left: 0; z-index: 40; display: none;
@@ -149,6 +155,24 @@ header.app {
 .toggle .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--cp-success); }
 .toggle.safe .dot { background: var(--cp-warning); }
 .toggle strong { color: var(--cp-text); font-weight: 600; }
+
+/* Stats strip */
+.stats-strip { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; }
+.stat-pill {
+  display: flex; align-items: baseline; gap: 7px; padding: 9px 14px; border-radius: 12px;
+  background: var(--cp-surface); border: 1px solid var(--cp-border);
+  box-shadow: 0 0 2px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.14);
+}
+.stat-pill .num { font-size: 19px; font-weight: 700; color: var(--cp-text); line-height: 1; }
+.stat-pill .lbl { font-size: 12px; color: var(--cp-text-muted); }
+.stat-pill.alert .num { color: var(--cp-danger); }
+.stat-pill.accent .num { color: var(--cp-accent); }
+/* Activity log */
+.activity-item { display: flex; gap: 10px; align-items: flex-start; padding: 8px 0; border-bottom: 1px solid var(--cp-border); }
+.activity-item:last-child { border-bottom: none; }
+.act-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--cp-accent); margin-top: 6px; flex: none; }
+.act-text { font-size: 13px; color: var(--cp-text); }
+.act-time { font-size: 11px; color: var(--cp-text-soft); margin-top: 1px; }
 
 /* Layout */
 .pipeline-row {
@@ -282,6 +306,18 @@ html[data-theme="dark"] .msg.user { background: var(--cp-accent-soft); color: va
 .task .t-body { flex: 1; min-width: 0; }
 .task .t-title { font-size: 13.5px; }
 .task.done .t-title { text-decoration: line-through; color: var(--cp-text-soft); }
+.task.overdue { background: rgba(220,38,38,0.05); border-radius: 8px; }
+.due-overdue { color: var(--cp-danger) !important; font-weight: 600; }
+/* Undo toast */
+.undo-toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
+  background: var(--cp-text); color: var(--cp-bg); padding: 11px 16px; border-radius: 10px;
+  box-shadow: var(--cp-shadow); font-size: 13.5px; display: flex; align-items: center; gap: 14px;
+  z-index: 60; opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s;
+}
+.undo-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); pointer-events: auto; }
+.undo-toast button { background: transparent; border: none; color: var(--cp-accent); font-weight: 700; font-family: inherit; font-size: 13.5px; cursor: pointer; }
+html[data-theme="dark"] .undo-toast button { color: var(--cp-accent-hover); }
 .task .t-meta { font-size: 11.5px; color: var(--cp-text-soft); margin-top: 2px; display: flex; gap: 8px; flex-wrap: wrap; }
 .tag { font-size: 10.5px; font-weight: 600; padding: 1px 7px; border-radius: 999px; background: var(--cp-surface-soft); border: 1px solid var(--cp-border); color: var(--cp-text-muted); }
 .tag.new { color: var(--cp-success); border-color: var(--cp-success); }
@@ -335,6 +371,21 @@ a { color: var(--cp-link); }
 .mini.li:hover { border-color: var(--cp-link); color: var(--cp-link); background: var(--cp-accent-soft); }
 .li-people-link { display: inline-block; margin-top: 12px; font-size: 12px; text-decoration: none; color: var(--cp-link); }
 .li-people-link:hover { text-decoration: underline; }
+.pcard-foot { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 12px; }
+.pcard-foot .li-people-link { margin-top: 0; }
+.prep-btn { font-family: inherit; font-size: 12px; font-weight: 600; cursor: pointer; border: 1px solid var(--cp-accent); background: var(--cp-accent-soft); color: var(--cp-accent); border-radius: 8px; padding: 4px 10px; }
+.prep-btn:hover { background: var(--cp-accent); color: var(--cp-accent-fg); }
+.notes-chip { font-family: inherit; font-size: 12px; font-weight: 600; cursor: pointer; border: 1px solid var(--cp-border); background: var(--cp-surface); color: var(--cp-text-muted); border-radius: 8px; padding: 4px 10px; }
+.notes-chip:hover, .notes-chip.open { border-color: var(--cp-accent); color: var(--cp-accent); }
+.notes-panel { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--cp-border); display: flex; flex-direction: column; gap: 10px; }
+.note-item { background: var(--cp-surface-soft); border: 1px solid var(--cp-border); border-radius: 8px; padding: 9px 11px; }
+.note-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 12.5px; margin-bottom: 5px; }
+.note-time { font-size: 10.5px; color: var(--cp-text-soft); font-weight: 400; }
+.note-body { font-size: 12.5px; color: var(--cp-text); line-height: 1.5; }
+.add-note-btn { align-self: flex-start; }
+.save-note-btn { margin-top: 10px; font-family: inherit; font-size: 12px; font-weight: 600; cursor: pointer; border: 1px solid var(--cp-border); background: var(--cp-surface); color: var(--cp-accent); border-radius: 8px; padding: 5px 11px; }
+.save-note-btn:hover { border-color: var(--cp-accent); background: var(--cp-accent-soft); }
+.save-note-btn:disabled { color: var(--cp-success); border-color: var(--cp-success); background: transparent; cursor: default; }
 .task { position: relative; }
 .task .t-actions { display: flex; gap: 5px; opacity: 0; transition: opacity .12s ease; margin-left: auto; }
 .task:hover .t-actions { opacity: 1; }
@@ -431,6 +482,9 @@ a { color: var(--cp-link); }
     </div>
   </header>
 
+  <!-- Stats strip -->
+  <div class="stats-strip" id="statsStrip"></div>
+
   <!-- Pipeline -->
   <div class="section-title" style="margin-bottom:10px">Pipeline
     <span class="spacer"></span>
@@ -441,6 +495,7 @@ a { color: var(--cp-link); }
   <!-- Main -->
   <div class="grid-main">
     <!-- Assistant -->
+    <div>
     <div class="card assistant">
       <div class="section-title"><span id="assistantName" title="Click to edit your name" style="cursor:pointer">Assistant</span> <span class="count">proposes &middot; you approve</span> <span class="edit-name-hint" id="editNameHint" title="Edit your name">&#9998;</span></div>
       <div class="chat-log" id="chatLog"></div>
@@ -451,6 +506,15 @@ a { color: var(--cp-link); }
           <button class="btn btn-primary" id="sendBtn">Send</button>
         </div>
       </div>
+    </div>
+    <div class="gap"></div>
+    <div class="card">
+      <div class="section-title">Activity
+        <span class="spacer"></span>
+        <button class="icon-btn" id="clearActivityBtn">Clear</button>
+      </div>
+      <div id="activityList"></div>
+    </div>
     </div>
 
     <!-- Sidebar -->
@@ -558,6 +622,9 @@ a { color: var(--cp-link); }
   </div>
 </div>
 
+<!-- Undo toast -->
+<div class="undo-toast" id="undoToast"><span id="undoMsg"></span><button id="undoBtn">Undo</button></div>
+
 <script>
 "use strict";
 
@@ -567,29 +634,63 @@ function t(){ return "id" + Date.now().toString(36) + Math.random().toString(36)
 
 function example() {
   return {
-    profile: { name: "Anahita" },
+    profile: { name: "" },
     companies: [
       { id:t(), name:"Company X", role:"Senior PM", stage:"Applied",
         steps:["Lead","Applied","Recruiter screen","Interview","Offer"], stepIdx:1,
-        note:"Application submitted — awaiting response." },
-      { id:t(), name:"Company Y", role:"Target team — PM", stage:"Networking",
+        notes:[{ id:t(), type:"note", title:"Note", body:"Sample role — rename this to a real company, or delete it.", ts:Date.now() }] },
+      { id:t(), name:"Company Y", role:"Product Manager", stage:"Networking",
         steps:["Lead","Networking","Referral","Interview","Offer"], stepIdx:1,
-        note:"Referral in play. A contact on a similar team agreed to refer me; follow up in ~1 week. Coffee chat Sep 8." },
+        notes:[{ id:t(), type:"note", title:"Note", body:"Networking in progress — a referral would help here.", ts:Date.now() }] },
       { id:t(), name:"Company Z", role:"Role of interest", stage:"Researching",
         steps:["Researching","Networking","Applied","Interview","Offer"], stepIdx:0,
-        note:"Finding people to coffee-chat about the role." },
+        notes:[{ id:t(), type:"note", title:"Note", body:"Researching the team and finding people to reach out to.", ts:Date.now() }] },
     ],
     tasks: [
-      { id:t(), title:"Prep questions for Company Y coffee chat", due:"Sep 8", company:"Company Y", done:false, isNew:false },
-      { id:t(), title:"Find people at Company Z to reach out to", due:"This week", company:"Company Z", done:false, isNew:false },
-      { id:t(), title:"Nudge Company X (recruiter) if no reply", due:"Sep 2", company:"Company X", done:false, isNew:false },
+      { id:t(), title:"Follow up on the Company X application", due:"This week", company:"Company X", done:false, isNew:false },
+      { id:t(), title:"Find people at Company Y to reach out to", due:"This week", company:"Company Y", done:false, isNew:false },
+      { id:t(), title:"Research Company Z's product and team", due:"This week", company:"Company Z", done:false, isNew:false },
     ],
-    calendar: [
-      { id:t(), title:"Coffee chat — Company Y contact", month:"SEP", day:"8", time:"6:30 PM", hi:false },
-    ],
+    calendar: [],
+    activity: [],
   };
 }
-function emptyState(name){ return { profile:{ name:name||"" }, companies:[], tasks:[], calendar:[] }; }
+function emptyState(name){ return { profile:{ name:name||"" }, companies:[], tasks:[], calendar:[], activity:[] }; }
+
+/* Ensure every company has a notes[] array; migrate legacy string `note`. */
+function normalizeCompany(c){
+  if (!Array.isArray(c.notes)) {
+    c.notes = [];
+    if (c.note && String(c.note).trim()) {
+      c.notes.push({ id:t(), type:"note", title:"Note", body:String(c.note), ts: Date.now() });
+    }
+  }
+  return c;
+}
+function addCompanyNote(co, type, title, body, extra){
+  normalizeCompany(co);
+  co.notes.unshift(Object.assign({ id:t(), type, title, body:String(body||""), ts: Date.now() }, extra||{}));
+}
+
+function logActivity(text){
+  if (!state.activity) state.activity = [];
+  state.activity.unshift({ id:t(), text: String(text).slice(0,140), ts: Date.now() });
+  if (state.activity.length > 50) state.activity.length = 50;
+}
+
+let _undoTimer = null;
+function showUndo(msg, undoFn){
+  const toast = document.getElementById("undoToast");
+  const msgEl = document.getElementById("undoMsg");
+  const btn = document.getElementById("undoBtn");
+  if (!toast) return;
+  msgEl.textContent = msg;
+  toast.classList.add("show");
+  clearTimeout(_undoTimer);
+  const hide = () => { toast.classList.remove("show"); };
+  btn.onclick = () => { clearTimeout(_undoTimer); hide(); undoFn(); };
+  _undoTimer = setTimeout(hide, 5000);
+}
 
 function saveState(){
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e){}
@@ -605,7 +706,8 @@ function loadState(){
     const s = JSON.parse(raw);
     if (!s || !Array.isArray(s.companies)) return null;
     s.profile = s.profile || { name:"" };
-    s.tasks = s.tasks || []; s.calendar = s.calendar || [];
+    s.tasks = s.tasks || []; s.calendar = s.calendar || []; s.activity = s.activity || [];
+    (s.companies||[]).forEach(normalizeCompany);
     return s;
   } catch(e){ return null; }
 }
@@ -621,7 +723,23 @@ const cfg = {
   syncAuto: (function(){ try { return localStorage.getItem("jhcos_sync_auto") === "1"; } catch(e){ return false; } })(),
   forceSafe: false,
 };
-const MODEL_FALLBACKS = ["gemini-2.0-flash","gemini-flash-latest","gemini-1.5-flash","gemini-2.5-flash"];
+const MODEL_FALLBACKS = ["gemini-2.0-flash","gemini-2.0-flash-001","gemini-flash-latest","gemini-2.5-flash","gemini-1.5-flash","gemini-1.5-flash-latest","gemini-1.5-flash-8b","gemini-pro-latest"];
+let discoveredModels = null; // cache of models the key can actually use
+async function discoverModels(){
+  if (discoveredModels) return discoveredModels;
+  try {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(cfg.apiKey)}`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    const names = (data.models||[])
+      .filter(m => (m.supportedGenerationMethods||[]).includes("generateContent") && /flash|pro/i.test(m.name))
+      .map(m => m.name.replace(/^models\//,""));
+    // prefer flash models first
+    names.sort((a,b)=> (/flash/i.test(b)?1:0) - (/flash/i.test(a)?1:0));
+    discoveredModels = names;
+    return names;
+  } catch(e){ return null; }
+}
 const planCache = {};
 const convo = []; // rolling conversation memory: {role:"user"|"assistant", text}
 const CONVO_TURNS = 5;
@@ -654,10 +772,65 @@ function renderUsage(){
 /* ---------- Render ---------- */
 const $ = (id) => document.getElementById(id);
 
+/* Date helpers for stats/overdue (parseDate defined in calendar section, hoisted) */
+function isOverdue(tk){
+  if (tk.done) return false;
+  const d = parseDate(tk.due);
+  return d && d < today0();
+}
+function isDueThisWeek(tk){
+  if (tk.done) return false;
+  const d = parseDate(tk.due);
+  if (!d) return /this week|week/i.test(tk.due||"");
+  const now = today0();
+  const in7 = new Date(now); in7.setDate(in7.getDate()+7);
+  return d >= now && d <= in7;
+}
+function renderStats(){
+  const el = $("statsStrip"); if (!el) return;
+  const roles = state.companies.length;
+  const interviews = state.companies.filter(c => /interview/i.test(c.stage)).length;
+  const openTasks = state.tasks.filter(x=>!x.done);
+  const dueWeek = openTasks.filter(isDueThisWeek).length;
+  const overdue = openTasks.filter(isOverdue).length;
+  const pill = (num, lbl, cls) => `<div class="stat-pill ${cls||""}"><span class="num">${num}</span><span class="lbl">${lbl}</span></div>`;
+  el.innerHTML =
+    pill(roles, roles===1?"role":"roles", "accent") +
+    pill(interviews, interviews===1?"interview":"interviews") +
+    pill(dueWeek, "due this week") +
+    (overdue > 0 ? pill(overdue, "overdue", "alert") : "");
+}
+
+function renderActivity(){
+  const el = $("activityList"); if (!el) return;
+  const acts = state.activity || [];
+  if (!acts.length) { el.innerHTML = `<div class="sub">No activity yet. Approved changes show up here.</div>`; return; }
+  el.innerHTML = acts.slice(0,12).map(a=>`
+    <div class="activity-item">
+      <span class="act-dot"></span>
+      <div><div class="act-text">${esc(a.text)}</div><div class="act-time">${relTime(a.ts)}</div></div>
+    </div>`).join("");
+}
+function relTime(ts){
+  const diff = Date.now() - ts;
+  const m = Math.floor(diff/60000), h = Math.floor(diff/3600000), d = Math.floor(diff/86400000);
+  if (m < 1) return "just now";
+  if (m < 60) return m + "m ago";
+  if (h < 24) return h + "h ago";
+  return d + "d ago";
+}
+
 function renderPipeline() {
   $("pipeline").innerHTML = state.companies.map(c => {
+    normalizeCompany(c);
     const segs = c.steps.map((s,i) => `<div class="seg ${i<=c.stepIdx?"on":""}"></div>`).join("");
     const opts = c.steps.map((s,i)=>`<option value="${i}" ${i===c.stepIdx?"selected":""}>${esc(s)}</option>`).join("");
+    const noteCount = c.notes.length;
+    const expanded = !!expandedNotes[c.id];
+    const notesHtml = expanded ? `<div class="notes-panel">
+        ${c.notes.map(n=>renderNoteItem(c.id, n)).join("") || `<div class="sub">No notes yet.</div>`}
+        <button class="icon-btn add-note-btn" data-addnote-co="${c.id}">+ Add note</button>
+      </div>` : "";
     return `<div class="card pcard" data-co="${c.id}">
       <div class="pcard-actions">
         <a class="mini li" href="${linkedInSearches(c.name, c.role)[0].url}" target="_blank" rel="noopener" title="Find people at ${esc(c.name)} on LinkedIn">in</a>
@@ -668,19 +841,59 @@ function renderPipeline() {
       <p class="role">${esc(c.role)}</p>
       <select class="stage-select" data-stage-co="${c.id}">${opts}</select>
       <div class="track">${segs}</div>
-      <p class="note">${esc(c.note)}</p>
-      <a class="li-people-link" href="${linkedInSearches(c.name, c.role)[0].url}" target="_blank" rel="noopener">&#128279; Find people at ${esc(c.name)} on LinkedIn</a>
+      <div class="pcard-foot">
+        <button class="notes-chip ${expanded?"open":""}" data-notes-co="${c.id}">&#128221; Notes ${noteCount?`(${noteCount})`:""} ${expanded?"&#9652;":"&#9662;"}</button>
+        <a class="li-people-link" href="${linkedInSearches(c.name, c.role)[0].url}" target="_blank" rel="noopener">&#128279; Find people</a>
+        ${/interview/i.test(c.stage) ? `<button class="prep-btn" data-prep-co="${c.id}">&#127891; Prep me</button>` : ""}
+      </div>
+      ${notesHtml}
     </div>`;
   }).join("") || `<div class="sub" style="grid-column:1/-1">No roles yet — click <strong>+ Add role</strong> to start your pipeline.</div>`;
 
   document.querySelectorAll("[data-stage-co]").forEach(sel=>{
     sel.onchange = () => {
       const co = state.companies.find(c=>c.id===sel.dataset.stageCo);
-      if (co) { co.stepIdx = +sel.value; co.stage = co.steps[co.stepIdx]; saveState(); renderPipeline(); }
+      if (co) { co.stepIdx = +sel.value; co.stage = co.steps[co.stepIdx]; logActivity(`${co.name} → ${co.stage}`); saveState(); renderPipeline(); renderStats(); renderActivity(); }
     };
   });
   document.querySelectorAll("[data-edit-co]").forEach(b=>{ b.onclick = ()=>editCompany(b.dataset.editCo); });
   document.querySelectorAll("[data-del-co]").forEach(b=>{ b.onclick = ()=>deleteCompany(b.dataset.delCo); });
+  document.querySelectorAll("[data-prep-co]").forEach(b=>{ b.onclick = ()=>prepInterview(b.dataset.prepCo); });
+  document.querySelectorAll("[data-notes-co]").forEach(b=>{ b.onclick = ()=>{ const id=b.dataset.notesCo; expandedNotes[id] = !expandedNotes[id]; renderPipeline(); }; });
+  document.querySelectorAll("[data-addnote-co]").forEach(b=>{ b.onclick = ()=>addNoteManual(b.dataset.addnoteCo); });
+  document.querySelectorAll("[data-delnote]").forEach(b=>{ b.onclick = ()=>{
+    const co = state.companies.find(c=>c.id===b.dataset.co); if (!co) return;
+    co.notes = co.notes.filter(n=>n.id!==b.dataset.delnote); saveState(); renderPipeline();
+  }; });
+  renderStats();
+}
+
+let expandedNotes = {};
+function renderNoteItem(coId, n){
+  const icon = { advice:"&#128161;", prep:"&#127891;", people:"&#128279;", note:"&#128221;" }[n.type] || "&#128221;";
+  let body = "";
+  if (n.type === "people" && Array.isArray(n.links)) {
+    body = `<div class="li-links">${n.links.map(l=>`<a href="${l.url}" target="_blank" rel="noopener" class="li-link">&#128279; ${esc(l.label)}</a>`).join("")}</div>`;
+  } else {
+    body = `<div class="note-body">${esc(n.body).replace(/\n/g,"<br>")}</div>`;
+  }
+  return `<div class="note-item">
+    <div class="note-head"><span>${icon} <strong>${esc(n.title||"Note")}</strong> <span class="note-time">${relTime(n.ts)}</span></span>
+      <button class="mini del" data-delnote="${n.id}" data-co="${coId}" title="Delete note">&#215;</button>
+    </div>
+    ${body}
+  </div>`;
+}
+function addNoteManual(coId){
+  const co = state.companies.find(c=>c.id===coId); if (!co) return;
+  openEdit("Add note", [
+    { key:"title", label:"Title", placeholder:"e.g. Recruiter call notes" },
+    { key:"body", label:"Note", type:"textarea", value:"" },
+  ], v=>{
+    if (!v.body && !v.title) { closeEdit(); return; }
+    addCompanyNote(co, "note", v.title||"Note", v.body||"");
+    saveState(); expandedNotes[coId] = true; renderPipeline(); closeEdit();
+  });
 }
 
 function taskStatus(tk){
@@ -689,14 +902,15 @@ function taskStatus(tk){
 }
 function taskRow(tk){
   const st = taskStatus(tk);
+  const overdue = isOverdue(tk);
   return `
-    <div class="task ${tk.done?"done":""}">
+    <div class="task ${tk.done?"done":""} ${overdue?"overdue":""}">
       <input type="checkbox" ${tk.done?"checked":""} data-task="${tk.id}" title="Mark complete" />
       <div class="t-body">
         <div class="t-title">${esc(tk.title)}</div>
         <div class="t-meta">
           <span class="tag ${tk.isNew?"new":""}">${/^[XYZ]$/.test(String(tk.company))?("Company "+tk.company):esc(tk.company||"General")}</span>
-          ${tk.due?`<span>Due ${esc(tk.due)}</span>`:""}
+          ${tk.due?`<span class="${overdue?"due-overdue":""}">${overdue?"&#9888; Overdue: ":"Due "}${esc(tk.due)}</span>`:""}
           ${tk.isNew?`<span style="color:var(--cp-success)">just added</span>`:""}
         </div>
       </div>
@@ -707,9 +921,15 @@ function taskRow(tk){
       </div>
     </div>`;
 }
+function sortOverdueFirst(arr){
+  return arr.slice().sort((a,b)=>{
+    const ao = isOverdue(a) ? 0 : 1, bo = isOverdue(b) ? 0 : 1;
+    return ao - bo;
+  });
+}
 function renderTasks() {
-  const pending = state.tasks.filter(x=>taskStatus(x)==="pending");
-  const prog = state.tasks.filter(x=>taskStatus(x)==="in_progress");
+  const pending = sortOverdueFirst(state.tasks.filter(x=>taskStatus(x)==="pending"));
+  const prog = sortOverdueFirst(state.tasks.filter(x=>taskStatus(x)==="in_progress"));
   const done = state.tasks.filter(x=>taskStatus(x)==="done");
   $("taskCount").textContent = (pending.length + prog.length) + " open";
 
@@ -723,7 +943,7 @@ function renderTasks() {
   document.querySelectorAll("[data-task]").forEach(el => {
     el.onchange = () => {
       const tk = state.tasks.find(x=>x.id===el.dataset.task);
-      if (tk) { tk.done = el.checked; if (tk.done) tk.status = "done"; else tk.status = "pending"; saveState(); renderTasks(); }
+      if (tk) { tk.done = el.checked; if (tk.done) { tk.status = "done"; logActivity(`Completed: ${tk.title}`); } else tk.status = "pending"; saveState(); renderTasks(); renderStats(); renderActivity(); }
     };
   });
   document.querySelectorAll("[data-toggle-prog]").forEach(b=>{
@@ -733,7 +953,13 @@ function renderTasks() {
     };
   });
   document.querySelectorAll("[data-edit-task]").forEach(b=>{ b.onclick = ()=>editTask(b.dataset.editTask); });
-  document.querySelectorAll("[data-del-task]").forEach(b=>{ b.onclick = ()=>{ state.tasks = state.tasks.filter(x=>x.id!==b.dataset.delTask); saveState(); renderTasks(); }; });
+  document.querySelectorAll("[data-del-task]").forEach(b=>{ b.onclick = ()=>{
+    const tk = state.tasks.find(x=>x.id===b.dataset.delTask);
+    const idx = state.tasks.findIndex(x=>x.id===b.dataset.delTask);
+    state.tasks = state.tasks.filter(x=>x.id!==b.dataset.delTask);
+    saveState(); renderTasks(); renderStats();
+    if (tk) showUndo(`Deleted "${tk.title.slice(0,32)}"`, ()=>{ state.tasks.splice(Math.min(idx,state.tasks.length),0,tk); saveState(); renderTasks(); renderStats(); });
+  }; });
 }
 
 /* ---------- Calendar: date parsing + month grid ---------- */
@@ -869,7 +1095,18 @@ function esc(s){ return String(s).replace(/[&<>"']/g, m=>({"&":"&amp;","<":"&lt;
 /* Build real LinkedIn people-search URLs for a company + role. Opens live results — no invented data. */
 function linkedInSearches(company, role){
   const co = (company||"").replace(/^company\s+/i,"").trim();
-  const r = (role||"Product Manager").replace(/[—-].*$/,"").trim();
+  // Extract a real searchable title from the role (handles "Target team — PM", "Senior PM", etc.)
+  let r = String(role||"").trim();
+  const titleMatch = r.match(/senior product manager|principal product manager|group product manager|product manager|program manager|senior pm|principal pm|group pm|director of product|product lead|product owner|\bpm\b|\bpo\b/i);
+  if (titleMatch) {
+    r = titleMatch[0];
+    if (/^pm$/i.test(r)) r = "Product Manager";
+    else if (/^po$/i.test(r)) r = "Product Owner";
+    r = r.replace(/\bpm\b/i, "Product Manager").replace(/\bpo\b/i, "Product Owner");
+  } else {
+    // fall back to the part before a dash, or a generic PM
+    r = r.replace(/[—–-].*$/,"").trim() || "Product Manager";
+  }
   const q = (kw)=> "https://www.linkedin.com/search/results/people/?keywords=" + encodeURIComponent(kw);
   return [
     { label:`${r} at ${co}`, url: q(`${r} ${co}`) },
@@ -914,15 +1151,15 @@ let pendingFirstRun = false;
 const DEFAULT_STEPS = ["Interested","Researching","Applied","Interview","Offer"];
 function addCompany(){
   openEdit("Add role", [
-    { key:"name", label:"Company / label", placeholder:"e.g. Company A or Acme" },
+    { key:"name", label:"Company / label", placeholder:"e.g. Acme" },
     { key:"role", label:"Role title", placeholder:"e.g. Senior PM" },
     { key:"stage", label:"Stage", type:"select", options:DEFAULT_STEPS, value:"Interested" },
-    { key:"note", label:"Notes", type:"textarea", value:"" },
   ], v=>{
     if (!v.name) return;
     const idx = DEFAULT_STEPS.indexOf(v.stage);
-    state.companies.push({ id:t(), name:v.name, role:v.role||v.name, stage:v.stage, steps:DEFAULT_STEPS.slice(), stepIdx: idx<0?0:idx, note:v.note||"" });
-    saveState(); renderPipeline(); closeEdit();
+    state.companies.push({ id:t(), name:v.name, role:v.role||v.name, stage:v.stage, steps:DEFAULT_STEPS.slice(), stepIdx: idx<0?0:idx, notes:[] });
+    logActivity(`Added ${v.name} to pipeline`);
+    saveState(); renderPipeline(); renderStats(); renderActivity(); closeEdit();
   });
 }
 function editCompany(id){
@@ -931,16 +1168,18 @@ function editCompany(id){
     { key:"name", label:"Company / label", value:c.name },
     { key:"role", label:"Role title", value:c.role },
     { key:"stage", label:"Stage", type:"select", options:c.steps, value:c.stage },
-    { key:"note", label:"Notes", type:"textarea", value:c.note },
   ], v=>{
-    c.name = v.name || c.name; c.role = v.role || c.role; c.note = v.note;
+    c.name = v.name || c.name; c.role = v.role || c.role;
     const idx = c.steps.indexOf(v.stage); if (idx>=0){ c.stepIdx = idx; c.stage = v.stage; }
-    saveState(); renderPipeline(); closeEdit();
+    saveState(); renderPipeline(); renderStats(); closeEdit();
   });
 }
 function deleteCompany(id){
   const c = state.companies.find(x=>x.id===id); if (!c) return;
-  if (confirm(`Remove "${c.name}" from your pipeline?`)) { state.companies = state.companies.filter(x=>x.id!==id); saveState(); renderPipeline(); }
+  const idx = state.companies.findIndex(x=>x.id===id);
+  state.companies = state.companies.filter(x=>x.id!==id);
+  saveState(); renderPipeline(); renderStats();
+  showUndo(`Deleted "${c.name}"`, ()=>{ state.companies.splice(Math.min(idx,state.companies.length),0,c); saveState(); renderPipeline(); renderStats(); });
 }
 function companyNames(){ return state.companies.map(c=>c.name); }
 function addTask(){
@@ -1147,11 +1386,14 @@ Action types:
 Rules: if a JD/new role is present, start with add_company then advice then tasks pulled from the JD. For a follow-up tweak, return only the specific update_task/remove_task/calendar/stage action needed. If the user asks to find/connect with people at a company, include a find_people action. 3-6 actions max. JSON only.`;
 }
 
-async function callGemini(userText){
-  const models = [cfg.model].concat(MODEL_FALLBACKS.filter(m=>m!==cfg.model));
+async function callGemini(userText, promptOverride){
+  let models = [cfg.model].concat(MODEL_FALLBACKS.filter(m=>m!==cfg.model));
+  let triedDiscovery = false;
   let lastErr = new Error("unknown");
   const sleep = ms => new Promise(r=>setTimeout(r, ms));
-  for (const model of models) {
+  const promptText = promptOverride || buildPrompt(userText);
+  for (let mi = 0; mi < models.length; mi++) {
+    const model = models[mi];
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(cfg.apiKey)}`;
     // Retry transient errors (503 overloaded / 500) up to 3 attempts with backoff
     for (let attempt = 0; attempt < 3; attempt++) {
@@ -1163,7 +1405,7 @@ async function callGemini(userText){
           headers: { "Content-Type": "application/json" },
           signal: ctrl.signal,
           body: JSON.stringify({
-            contents: [{ parts: [{ text: buildPrompt(userText) }] }],
+            contents: [{ parts: [{ text: promptText }] }],
             generationConfig: { temperature: 0.4, responseMimeType: "application/json", maxOutputTokens: 900 }
           })
         });
@@ -1193,6 +1435,12 @@ async function callGemini(userText){
         throw e; // 429, bad key, parse errors etc. — stop
       }
     }
+    // If we've exhausted the hardcoded list on 404s, ask the API which models this key actually supports.
+    if (mi === models.length - 1 && !triedDiscovery && /404/.test(String(lastErr.message))) {
+      triedDiscovery = true;
+      const found = await discoverModels();
+      if (found && found.length) { models = models.concat(found.filter(m=>models.indexOf(m)===-1)); }
+    }
   }
   throw lastErr;
 }
@@ -1201,15 +1449,18 @@ async function callGemini(userText){
 function extractTitle(text){
   const m = text.match(/chief of staff|senior product manager|principal product manager|group product manager|product manager|program manager|senior pm|principal pm|group pm|director of product|product lead|product owner/i);
   if (m) return m[0].replace(/\b\w/g, c=>c.toUpperCase());
+  // "...role at Microsoft" / "...job at Acme" → use the company name
+  const at = text.match(/\b(?:at|with|for|in)\s+([A-Z][A-Za-z0-9.&'\- ]{1,30})/);
+  if (at) return at[1].trim().replace(/[.,!?]+$/,"");
   const first = (text.split(/\n/)[0]||"").trim();
-  if (first && first.length <= 60) return first;
+  if (first && first.length <= 40) return first;
   return "New role";
 }
 function safePlan(userText){
   const s = userText.toLowerCase();
   const isJD = looksLikeJD(userText);
   const hasLink = /https?:\/\/|careers|apply|\bjob\b|\bposition\b|opening/.test(s);
-  const wantsApproach = /approach|how (do|should|would)|suggest|strategy|prepare|prep|tips|advice|go about/.test(s);
+  const wantsApproach = /approach|how (do|should|would)|suggest|strategy|prepare|prep|tips|advice|go about|target (a |this )?role|want (a|to)|apply(ing)? (to|at|for)|going for|interested in/.test(s);
 
   // Rename / edit an existing company — e.g. "change Company X's name to PointClickCare"
   const renameMatch = userText.match(/(?:rename|change|update|set)\s+(.+?)(?:'s\s+name|\s+name)?\s+to\s+(.+)/i);
@@ -1329,6 +1580,61 @@ function safePlan(userText){
   };
 }
 
+/* ---------- Interview prep (#11) ---------- */
+async function prepInterview(coId){
+  const co = state.companies.find(c=>c.id===coId); if (!co) return;
+  addUserMsg(`Prep me for my ${co.name} interview (${co.role}).`);
+  const thinking = addThinking();
+  const live = !!cfg.apiKey && !cfg.forceSafe;
+  let plan, usedLive = false, failReason = "";
+  if (live) {
+    try { const r = await callGemini("", prepPrompt(co)); plan = r.plan; usedLive = true; usageBump(); }
+    catch(e){ plan = prepSafe(co); failReason = (e&&e.message)||"error"; }
+  } else {
+    await new Promise(r=>setTimeout(r,450));
+    plan = prepSafe(co);
+  }
+  thinking.remove();
+  if (live && !usedLive) addBotMsg(`<span style="color:var(--cp-warning)">&#9888; Live AI unavailable (${esc(failReason)}) — used a solid scripted prep instead.</span>`);
+  else if (usedLive) addBotMsg(`<span style="color:var(--cp-success)">&#9679; Live Gemini prepped this.</span>`);
+  const c = addBotMsg("");
+  renderProposal(plan, c);
+}
+function prepPrompt(co){
+  return `You are "Chief of Staff", prepping a product manager for a job interview. The candidate's background: CSPO-certified PM, Rotman MBA, ex-Salesforce & AWS software engineer (passwordless IAM, AWS CI/CD pipelines), CIBC product roles in payments/core-banking & a centralized data platform.
+Role: "${co.role}" at "${co.name}". Notes: ${(co.notes||[]).map(n=>n.body).filter(Boolean).join(" | ")||"n/a"}.
+Produce interview prep as ONLY JSON (no fences):
+{"reply":"one short sentence","company":"${co.name}","actions":[
+ {"type":"advice","text":"Likely questions:\\n1) ...\\n2) ...\\n3) ...\\n4) ...\\n5) ..."},
+ {"type":"advice","text":"Your STAR stories to lead with:\\n• ... (maps to ...)\\n• ...\\n• ..."},
+ {"type":"task","company":"${co.name}","due":"Before the interview","text":"Rehearse 3 STAR stories out loud"},
+ {"type":"task","company":"${co.name}","due":"Before the interview","text":"Prepare 3 smart questions to ask them"}
+]}
+Make the questions specific to this role and the STAR stories specific to the candidate's real experience. JSON only.`;
+}
+function prepSafe(co){
+  return {
+    reply: `Here's a focused prep for your ${co.name} interview.`,
+    company: co.name,
+    actions: [
+      { type:"advice", text:
+        `Likely questions for ${co.role}:\n`+
+        `1) Walk me through a product you shipped end-to-end and the impact.\n`+
+        `2) How do you prioritize when engineering, design, and stakeholders disagree?\n`+
+        `3) Tell me about a technical trade-off you drove (APIs / platform / identity).\n`+
+        `4) How do you use data and AI tools in your PM workflow?\n`+
+        `5) Describe a time you turned around a struggling initiative.` },
+      { type:"advice", text:
+        `STAR stories to lead with:\n`+
+        `• Passwordless IAM at Salesforce → identity & access depth.\n`+
+        `• AWS CI/CD pipeline automation → workflow orchestration & platform thinking.\n`+
+        `• CIBC payments / centralized data platform → cross-functional delivery & impact.` },
+      { type:"task", company:co.name, due:"Before the interview", text:"Rehearse 3 STAR stories out loud" },
+      { type:"task", company:co.name, due:"Before the interview", text:"Prepare 3 smart questions to ask them" },
+    ],
+  };
+}
+
 /* ---------- Proposal UI ---------- */
 let proposalSeq = 0;
 function renderProposal(plan, container){
@@ -1345,21 +1651,25 @@ function renderProposal(plan, container){
     if (a.type === "find_people") {
       const links = linkedInSearches(a.company, a.role);
       const linkHtml = links.map(l=>`<a href="${l.url}" target="_blank" rel="noopener" class="li-link">&#128279; ${esc(l.label)}</a>`).join("");
+      const saveBtn = findCompanyByName(a.company) ? `<button class="save-note-btn" data-savenote="people" data-si="${i}">&#128221; Add to ${esc(a.company)} card</button>` : "";
       return `<div class="action-row advice-row" data-i="${i}">
         <span class="ico">${ico}</span>
         <div class="body">
           <div class="kind">${kind}</div>
           <div class="txt">Real LinkedIn searches for <strong>${esc(a.company)}</strong> — opens actual results (I don't invent names):</div>
           <div class="li-links">${linkHtml}</div>
+          ${saveBtn}
         </div>
       </div>`;
     }
     if (a.type === "advice") {
+      const saveBtn = findCompanyByName(plan.company) ? `<button class="save-note-btn" data-savenote="advice" data-si="${i}">&#128221; Save to ${esc(plan.company)} card</button>` : "";
       return `<div class="action-row advice-row" data-i="${i}">
         <span class="ico">${ico}</span>
         <div class="body">
           <div class="kind">${kind}</div>
           <div class="txt advice-txt">${esc(a.text).replace(/\n/g,"<br>")}</div>
+          ${saveBtn}
         </div>
       </div>`;
     }
@@ -1400,6 +1710,29 @@ function renderProposal(plan, container){
     });
     propEl.querySelector('[data-act="tweak"]').textContent = "Editing…";
   };
+  // Save-to-Notes buttons (advice / people links) — persist to the company card
+  propEl.querySelectorAll("[data-savenote]").forEach(btn=>{
+    btn.onclick = () => {
+      const a = plan.actions[+btn.dataset.si];
+      const type = btn.dataset.savenote;
+      const coName = type === "people" ? a.company : plan.company;
+      const co = findCompanyByName(coName);
+      if (!co) return;
+      if (type === "people") {
+        addCompanyNote(co, "people", `People at ${co.name}`, "", { links: linkedInSearches(a.company, a.role) });
+      } else {
+        addCompanyNote(co, "advice", "AI advice", a.text);
+      }
+      logActivity(`Saved a note to ${co.name}`);
+      saveState(); expandedNotes[co.id] = true; renderPipeline(); renderActivity();
+      btn.textContent = "✓ Saved to card"; btn.disabled = true;
+    };
+  });
+}
+function findCompanyByName(name){
+  if (!name) return null;
+  const n = String(name).toLowerCase();
+  return state.companies.find(c=>c.name.toLowerCase()===n) || state.companies.find(c=>c.name.toLowerCase().includes(n)||n.includes(c.name.toLowerCase())) || null;
 }
 
 function applyPlan(plan, propEl){
@@ -1423,8 +1756,9 @@ function applyPlan(plan, propEl){
         state.companies.push({
           id: t(), name: a.name, role: a.role || a.name,
           stage: startStage, steps, stepIdx: sIdx,
-          note: "Added from your update — build the plan of attack.", isNew: true
+          notes: [], isNew: true
         });
+        logActivity(`Added ${a.name} to pipeline`);
       }
     } else if (a.type === "update_company") {
       const m = String(a.match||a.company||"").toLowerCase();
@@ -1434,12 +1768,12 @@ function applyPlan(plan, propEl){
         const oldName = co.name;
         if (a.name) co.name = a.name;
         if (a.role) co.role = a.role;
-        if (a.note) co.note = a.note;
+        if (a.note) addCompanyNote(co, "note", "Note", a.note);
         co.isNew = true;
-        // keep any tasks pointing at the old company name in sync
         if (a.name && a.name !== oldName) {
           state.tasks.forEach(tk => { if (tk.company === oldName) tk.company = a.name; });
-        }
+          logActivity(`Renamed ${oldName} → ${a.name}`);
+        } else if (a.role) { logActivity(`Updated ${co.name} role → ${a.role}`); }
       }
     } else if (a.type === "advice") {
     } else if (a.type === "stage") {
@@ -1448,9 +1782,11 @@ function applyPlan(plan, propEl){
         const idx = co.steps.findIndex(s => s.toLowerCase() === String(a.to||"").toLowerCase());
         co.stage = a.to || co.stage;
         if (idx >= 0) co.stepIdx = idx; else co.stepIdx = Math.min(co.stepIdx+1, co.steps.length-1);
+        logActivity(`${co.name} → ${co.stage}`);
       }
     } else if (a.type === "task") {
       state.tasks.unshift({ id:t(), title:text, due:a.due||"", company:a.company||plan.company||"", done:false, isNew:true });
+      logActivity(`Added task: ${text.slice(0,50)}`);
     } else if (a.type === "update_task") {
       const m = String(a.match||"").toLowerCase();
       const tk = state.tasks.find(x=>x.title.toLowerCase().includes(m)) || state.tasks.find(x=>!x.done);
@@ -1459,14 +1795,16 @@ function applyPlan(plan, propEl){
         if (a.due) tk.due = a.due;
         if (a.company) tk.company = a.company;
         tk.isNew = true;
+        logActivity(`Updated task: ${tk.title.slice(0,50)}`);
       }
     } else if (a.type === "remove_task") {
       const m = String(a.match||"").toLowerCase();
       const idx = state.tasks.findIndex(x=>x.title.toLowerCase().includes(m));
-      if (idx >= 0) state.tasks.splice(idx,1);
+      if (idx >= 0) { logActivity(`Removed task: ${state.tasks[idx].title.slice(0,50)}`); state.tasks.splice(idx,1); }
     } else if (a.type === "calendar") {
       if (a.title || a.day) {
         state.calendar.push({ id:t(), title:a.title||text||"Event", month:String(a.month||"").toUpperCase().slice(0,4), day:a.day||"", time:a.time||"", hi:true });
+        logActivity(`Added event: ${(a.title||text||"Event").slice(0,50)}`);
       } else {
         const ev = state.calendar.find(e=>true);
         if (ev) ev.hi = true;
@@ -1474,12 +1812,13 @@ function applyPlan(plan, propEl){
     } else if (a.type === "followup_ask") {
       if (followText) {
         state.tasks.unshift({ id:t(), title:'Follow-up drafted: "'+ (followText.length>70?followText.slice(0,70)+"…":followText) +'"', due:a.due||"", company:(plan.company||""), done:false, isNew:true });
+        logActivity(`Drafted a follow-up`);
       }
     }
   });
 
   saveState();
-  renderPipeline(); renderTasks(); renderCalendar();
+  renderPipeline(); renderTasks(); renderCalendar(); renderStats(); renderActivity();
   const applied = propEl.querySelectorAll(".action-row .chk:checked").length + (followText?1:0);
   propEl.innerHTML = `<span class="sub" style="color:var(--cp-success)">&#10003; Approved — applied ${applied} update${applied===1?"":"s"} to your pipeline, tasks &amp; calendar.</span>`;
   setTimeout(()=>{ state.tasks.forEach(x=>x.isNew=false); state.companies.forEach(x=>x.isNew=false); saveState(); renderTasks(); renderPipeline(); }, 4000);
@@ -1631,7 +1970,7 @@ function greet(){
 
 /* ---------- Wire up ---------- */
 function init(){
-  renderPipeline(); renderTasks(); renderCalendar(); renderMode(); renderChips(); renderUsage(); renderAssistantName(); renderAvatar(); buildAvatarPicker();
+  renderPipeline(); renderTasks(); renderCalendar(); renderMode(); renderChips(); renderUsage(); renderAssistantName(); renderAvatar(); buildAvatarPicker(); renderStats(); renderActivity();
 
   const firstRun = !state.profile.onboarded && !state.profile.name;
   greet();                         // always greet so the chat is never blank
@@ -1685,6 +2024,7 @@ function init(){
     greet();
   };
   $("addRoleBtn").onclick = addCompany;
+  $("clearActivityBtn").onclick = () => { state.activity = []; saveState(); renderActivity(); };
   $("addTaskBtn").onclick = addTask;
   $("addEventBtn").onclick = addEvent;
   $("calPrev").onclick = () => { calView.setMonth(calView.getMonth()-1); renderCalendar(); };
