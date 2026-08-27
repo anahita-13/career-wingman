@@ -183,7 +183,7 @@ header.app {
 
 /* Assistant */
 .assistant { display: flex; flex-direction: column; min-height: 460px; }
-.chat-log { display: flex; flex-direction: column; gap: 12px; margin-bottom: 14px; }
+.chat-log { display: flex; flex-direction: column; gap: 12px; margin-bottom: 14px; flex: 1; max-height: 420px; overflow-y: auto; }
 .msg { max-width: 92%; padding: 11px 14px; border-radius: 14px; font-size: 14px; line-height: 1.5; }
 .msg.user { align-self: flex-end; background: var(--cp-accent); color: var(--cp-accent-fg); border-bottom-right-radius: 4px; }
 .msg.bot { align-self: flex-start; background: var(--cp-surface-soft); border: 1px solid var(--cp-border); border-bottom-left-radius: 4px; }
@@ -668,19 +668,18 @@ function parseDate(str){
   const base = today0();
   // ISO 2026-09-08
   let m = s.match(/(\d{4})-(\d{1,2})-(\d{1,2})/);
-  if (m) return new Date(+m[1], +m[2]-1, +m[3]);
+  if (m) return mkDate(+m[1], +m[2]-1, +m[3]);
   // 9/8 or 09/08
   m = s.match(/^(\d{1,2})\/(\d{1,2})$/);
-  if (m) { const d = new Date(base.getFullYear(), +m[1]-1, +m[2]); return d; }
+  if (m) return mkDate(base.getFullYear(), +m[1]-1, +m[2]);
   // "sep 8" / "september 8"
   m = s.match(/([a-z]{3,9})\.?\s+(\d{1,2})/);
   if (m) {
     let mi = MONTHS.indexOf(m[1].slice(0,3).toUpperCase());
     if (mi < 0 && MONTH_FULL[m[1]] !== undefined) mi = MONTH_FULL[m[1]];
     if (mi >= 0) {
-      let yr = base.getFullYear();
-      const d = new Date(yr, mi, +m[2]);
-      if (d < base && (base - d) > 86400000*180) d.setFullYear(yr+1); // roll forward if long past
+      let d = mkDate(base.getFullYear(), mi, +m[2]);
+      if (d && d < base && (base - d) > 86400000*180) { const r = mkDate(base.getFullYear()+1, mi, +m[2]); return r || d; }
       return d;
     }
   }
@@ -694,10 +693,21 @@ function parseDate(str){
   }
   return null; // "this week", "next week", "eod", etc.
 }
+// Build a Date only if the components are valid (rejects overflow like Sep 32 or month 13)
+function mkDate(y, monthIdx, day){
+  if (monthIdx < 0 || monthIdx > 11 || day < 1 || day > 31) return null;
+  const d = new Date(y, monthIdx, day);
+  if (d.getFullYear() !== y || d.getMonth() !== monthIdx || d.getDate() !== day) return null; // overflowed
+  return d;
+}
 function eventDate(ev){
   const mi = MONTHS.indexOf(String(ev.month||"").toUpperCase().slice(0,3));
   const day = parseInt(ev.day,10);
-  if (mi >= 0 && day) { const d = new Date(today0().getFullYear(), mi, day); if (d < today0() && (today0()-d)>86400000*180) d.setFullYear(d.getFullYear()+1); return d; }
+  if (mi >= 0 && day) {
+    let d = mkDate(today0().getFullYear(), mi, day);
+    if (d && d < today0() && (today0()-d)>86400000*180) { const r = mkDate(today0().getFullYear()+1, mi, day); return r || d; }
+    return d;
+  }
   return null;
 }
 
@@ -908,7 +918,25 @@ function addThinking(){
   d.innerHTML = `<div class="who">Chief of Staff</div><div class="thinking"><span></span><span></span><span></span></div>`;
   $("chatLog").appendChild(d); scrollChat(); return d;
 }
-function scrollChat(){ const l=$("chatLog"); l.scrollTop = l.scrollHeight; window.scrollTo(0, document.body.scrollHeight); }
+function scrollChat(){ const l=$("chatLog"); l.scrollTop = l.scrollHeight; }
+
+/* ---------- Input guard (safety + on-topic) ---------- */
+function guardInput(text){
+  const s = " " + text.toLowerCase().replace(/[^a-z0-9\s]/g," ") + " ";
+  // 1) Hard block: clearly harmful / illegal intents
+  const harmful = /\b(sell|buy|make|deal|smuggle|traffic)\b[\s\w]*\b(drugs?|cocaine|heroin|meth|weed|weapons?|guns?|explosives?)\b|\b(kill|harm|hurt|attack|bomb)\b[\s\w]*\b(someone|people|him|her|them)\b|\bhack(ing)?\b[\s\w]*\b(account|password|bank|system)\b|\b(child|minor)\b[\s\w]*\b(sexual|porn)\b|\bself.?harm|suicide method/;
+  if (harmful.test(s)) {
+    return { block:true, message:"I can't help with that. I'm a job-search assistant — if you're dealing with something serious, please reach out to a qualified professional or local support service." };
+  }
+  // 2) On-topic check: does this relate to a job search?
+  const jobTerms = /\b(job|jobs|role|roles|position|posting|application|apply|applied|applying|recruit|recruiter|interview|screen|offer|resume|cv|cover letter|referral|refer|network|networking|coffee chat|hiring|manager|company|companies|pm|product|program|engineer|analyst|designer|salary|comp|offer|onboard|linkedin|follow.?up|reach out|outreach|career|opening|team|hr|talent|panel|loop|take.?home|assessment|portfolio|standup|stakeholder|okr|launch|ship|roadmap)\b/;
+  const followUpish = text.trim().length < 60 && /\b(make (that|it)|change|move|reschedule|set|due|instead|rename|update|remove|delete|drop|add|yes|no|friday|monday|tuesday|wednesday|thursday|saturday|sunday|tomorrow|today|next week|this week)\b/i.test(text);
+  const looksJd = looksLikeJD(text);
+  if (!jobTerms.test(s) && !followUpish && !looksJd && text.trim().length > 3) {
+    return { block:true, offtopic:true, message:"I'm your job-hunt Chief of Staff — I can only help with your job search: roles, applications, interviews, networking, and the tasks around them. Tell me what's happening with a role and I'll build a plan." };
+  }
+  return { block:false };
+}
 
 /* ---------- Cloud sync (optional Worker + KV) ---------- */
 function syncEndpoint(){
@@ -953,7 +981,7 @@ function setSyncStatus(msg, isErr){
 /* ---------- JD reader (optional proxy) ---------- */
 function findUrl(text){
   const m = text.match(/https?:\/\/[^\s]+/i);
-  return m ? m[0] : "";
+  return m ? m[0].replace(/[.,;:!?)\]}'"]+$/,"") : "";
 }
 function isBareUrl(text){
   const trimmed = text.trim();
@@ -1296,6 +1324,16 @@ async function handleSend(){
   addUserMsg(text);
   pushConvo("user", origText);
   $("composer").value = "";
+
+  // Safety + on-topic guard (skip for bare job links, handled below)
+  if (!isBareUrl(text)) {
+    const g = guardInput(text);
+    if (g.block) {
+      addBotMsg(`<span style="color:${g.offtopic ? "var(--cp-text-muted)" : "var(--cp-danger)"}">${esc(g.message)}</span>`);
+      busy = false; $("sendBtn").disabled = false;
+      return;
+    }
+  }
 
   // If the message is essentially a job link, try the JD reader proxy first
   if (isBareUrl(text)) {
