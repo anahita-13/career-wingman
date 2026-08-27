@@ -556,21 +556,25 @@ a { color: var(--cp-link); }
 <!-- API key modal -->
 <div class="modal-bg" id="keyModal">
   <div class="modal">
-    <h3>Live AI — Gemini key</h3>
-    <p>Paste a free Google AI Studio (Gemini) API key to run the assistant live. Leave blank to run in <strong>safe mode</strong> (pre-scripted, never fails). The key stays on this device.</p>
+    <h3>Live AI setup</h3>
+    <p>Pick a provider and paste a free API key to run the assistant live. Leave blank to run in <strong>safe mode</strong> (pre-scripted, never fails). The key stays on this device.</p>
     <div class="field">
-      <label for="keyInput">Gemini API key</label>
+      <label for="providerInput">Provider</label>
+      <select id="providerInput">
+        <option value="gemini">Google Gemini</option>
+        <option value="groq">Groq (fast, free)</option>
+        <option value="openrouter">OpenRouter (free models)</option>
+      </select>
+      <div class="jd-hint" id="providerHint">Get a free key at aistudio.google.com/app/apikey</div>
+    </div>
+    <div class="field">
+      <label for="keyInput">API key</label>
       <input type="password" id="keyInput" placeholder="AIza…" autocomplete="off" />
     </div>
     <div class="field">
       <label for="modelInput">Model</label>
-      <select id="modelInput">
-        <option value="gemini-2.0-flash">gemini-2.0-flash (recommended)</option>
-        <option value="gemini-2.5-flash">gemini-2.5-flash</option>
-        <option value="gemini-1.5-flash">gemini-1.5-flash</option>
-        <option value="gemini-flash-latest">gemini-flash-latest</option>
-      </select>
-      <div class="jd-hint">If you get a 404, the app auto-tries other models. Free tier is rate-limited — the app trims requests and caches repeats to stretch it.</div>
+      <select id="modelInput"></select>
+      <div class="jd-hint">On error the app auto-retries and tries alternate models. Free tiers are rate-limited — requests are trimmed and repeats cached.</div>
     </div>
     <div class="field">
       <label for="proxyInput">JD reader URL (optional)</label>
@@ -715,14 +719,27 @@ let state = loadState() || example();
 
 /* ---------- Config + usage ---------- */
 const cfg = {
+  provider: (function(){ try { return localStorage.getItem("jhcos_provider") || "gemini"; } catch(e){ return "gemini"; } })(),
   apiKey: (function(){ try { return localStorage.getItem("jhcos_key") || ""; } catch(e){ return ""; } })(),
-  model: (function(){ try { return localStorage.getItem("jhcos_model") || "gemini-2.0-flash"; } catch(e){ return "gemini-2.0-flash"; } })(),
+  model: (function(){ try { return localStorage.getItem("jhcos_model") || ""; } catch(e){ return ""; } })(),
   proxyUrl: (function(){ try { return localStorage.getItem("jhcos_proxy") || ""; } catch(e){ return ""; } })(),
   syncUrl: (function(){ try { return localStorage.getItem("jhcos_sync_url") || ""; } catch(e){ return ""; } })(),
   syncCode: (function(){ try { return localStorage.getItem("jhcos_sync_code") || ""; } catch(e){ return ""; } })(),
   syncAuto: (function(){ try { return localStorage.getItem("jhcos_sync_auto") === "1"; } catch(e){ return false; } })(),
   forceSafe: false,
 };
+const PROVIDERS = {
+  gemini: { label:"Google Gemini", keyHint:"AIza…", keyUrl:"https://aistudio.google.com/app/apikey",
+    models:["gemini-2.0-flash","gemini-flash-latest","gemini-1.5-flash","gemini-2.5-flash"], defaultModel:"gemini-2.0-flash" },
+  groq: { label:"Groq (fast, free)", keyHint:"gsk_…", keyUrl:"https://console.groq.com/keys",
+    models:["llama-3.3-70b-versatile","llama-3.1-8b-instant","llama3-70b-8192","mixtral-8x7b-32768"], defaultModel:"llama-3.3-70b-versatile" },
+  openrouter: { label:"OpenRouter (free models)", keyHint:"sk-or-…", keyUrl:"https://openrouter.ai/keys",
+    models:["meta-llama/llama-3.3-70b-instruct:free","google/gemini-2.0-flash-exp:free","mistralai/mistral-7b-instruct:free"], defaultModel:"meta-llama/llama-3.3-70b-instruct:free" },
+};
+function providerModel(){
+  const p = PROVIDERS[cfg.provider] || PROVIDERS.gemini;
+  return cfg.model || p.defaultModel;
+}
 const MODEL_FALLBACKS = ["gemini-2.0-flash","gemini-2.0-flash-001","gemini-flash-latest","gemini-2.5-flash","gemini-1.5-flash","gemini-1.5-flash-latest","gemini-1.5-flash-8b","gemini-pro-latest"];
 let discoveredModels = null; // cache of models the key can actually use
 async function discoverModels(){
@@ -1075,7 +1092,9 @@ function renderMode() {
   const tog = $("modeToggle");
   const live = !!cfg.apiKey && !cfg.forceSafe;
   tog.classList.toggle("safe", !live);
-  $("modeLabel").textContent = live ? "Gemini" : "Safe mode";
+  const pl = (PROVIDERS[cfg.provider]||{}).label || "Gemini";
+  const shortName = { "Google Gemini":"Gemini", "Groq (fast, free)":"Groq", "OpenRouter (free models)":"OpenRouter" }[pl] || pl;
+  $("modeLabel").textContent = live ? shortName : "Safe mode";
 }
 
 function renderChips() {
@@ -1404,8 +1423,64 @@ function repairJson(s){
   } catch(e){ return null; }
 }
 
+async function callLLM(userText, promptOverride){
+  const promptText = promptOverride || buildPrompt(userText);
+  if (cfg.provider === "groq" || cfg.provider === "openrouter") return callOpenAICompatible(promptText);
+  return callGemini(userText, promptOverride);
+}
+
+async function callOpenAICompatible(promptText){
+  const endpoint = cfg.provider === "groq"
+    ? "https://api.groq.com/openai/v1/chat/completions"
+    : "https://openrouter.ai/api/v1/chat/completions";
+  const model = providerModel();
+  const sleep = ms => new Promise(r=>setTimeout(r, ms));
+  let lastErr = new Error("unknown");
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const ctrl = new AbortController();
+    const timer = setTimeout(()=>ctrl.abort(), 15000);
+    try {
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type":"application/json", "Authorization":"Bearer " + cfg.apiKey },
+        signal: ctrl.signal,
+        body: JSON.stringify({
+          model,
+          messages: [{ role:"user", content: promptText }],
+          temperature: 0.4,
+          max_tokens: 2048,
+          response_format: { type: "json_object" },
+        })
+      });
+      clearTimeout(timer);
+      if (res.status === 429) throw new Error("429 rate limit — free quota reached");
+      if (res.status === 401 || res.status === 403) throw new Error("API " + res.status + " (check your key)");
+      if (res.status === 503 || res.status === 500 || res.status === 502) {
+        lastErr = new Error("API " + res.status + " (servers busy)");
+        if (attempt < 2) { await sleep(700*(attempt+1)); continue; }
+        throw lastErr;
+      }
+      if (!res.ok) throw new Error("API " + res.status);
+      const data = await res.json();
+      const txt = data?.choices?.[0]?.message?.content;
+      if (!txt) throw new Error("empty response");
+      const clean = txt.replace(/^```json\s*/i,"").replace(/```\s*$/,"").trim();
+      let plan;
+      try { plan = JSON.parse(clean); } catch(e){ plan = repairJson(clean); if (!plan) throw e; }
+      if (!plan.actions || !Array.isArray(plan.actions) || !plan.actions.length) throw new Error("bad shape");
+      return { plan, live:true };
+    } catch(e){
+      clearTimeout(timer); lastErr = e;
+      if (e.name === "AbortError" && attempt < 2) { await sleep(500); continue; }
+      if (/503|500|502|busy/.test(String(e.message)) && attempt < 2) continue;
+      throw e;
+    }
+  }
+  throw lastErr;
+}
+
 async function callGemini(userText, promptOverride){
-  let models = [cfg.model].concat(MODEL_FALLBACKS.filter(m=>m!==cfg.model));
+  let models = [providerModel()].concat(MODEL_FALLBACKS.filter(m=>m!==providerModel()));
   let triedDiscovery = false;
   let lastErr = new Error("unknown");
   const sleep = ms => new Promise(r=>setTimeout(r, ms));
@@ -1468,14 +1543,19 @@ async function callGemini(userText, promptOverride){
 
 /* ---------- Safe mode (scripted, JD-aware) ---------- */
 function extractTitle(text){
+  // Known role titles → confident.
   const m = text.match(/chief of staff|senior product manager|principal product manager|group product manager|product manager|program manager|senior pm|principal pm|group pm|director of product|product lead|product owner/i);
   if (m) return m[0].replace(/\b\w/g, c=>c.toUpperCase());
-  // "...role at Microsoft" / "...job at Acme" → use the company name
-  const at = text.match(/\b(?:at|with|for|in)\s+([A-Z][A-Za-z0-9.&'\- ]{1,30})/);
-  if (at) return at[1].trim().replace(/[.,!?]+$/,"");
-  const first = (text.split(/\n/)[0]||"").trim();
-  if (first && first.length <= 40) return first;
-  return "New role";
+  // A clearly-capitalized proper noun after a preposition (e.g. "at Microsoft", "to Stripe") → confident.
+  const stop = new Set(["a","an","the","role","roles","job","jobs","position","apply","applying","find","finding","approach","get","getting","some","any","new","my","this","that","it","them","people","company","work","working"]);
+  const re = /\b(?:at|to|with|for|about|into|joining|@)\s+([A-Z][A-Za-z0-9.&'\-]{1,29})/g;
+  let match, best = "";
+  while ((match = re.exec(text))) {
+    const cand = match[1].trim().replace(/[.,!?]+$/,"");
+    if (!stop.has(cand.toLowerCase())) best = cand;
+  }
+  if (best) return best;
+  return null; // not confident — caller should ask the user
 }
 function safePlan(userText){
   const s = userText.toLowerCase();
@@ -1538,7 +1618,7 @@ function safePlan(userText){
   }
 
   if (isJD || hasLink || wantsApproach) {
-    const label = extractTitle(userText);
+    const label = extractTitle(userText); // may be null when unsure
     // Light "reading" of the JD: pull themes to tailor tasks
     const themeTasks = [];
     if (/\bapi|platform|developer|integration|services/.test(s)) themeTasks.push("Map your API/platform experience to their platform needs");
@@ -1551,22 +1631,30 @@ function safePlan(userText){
       "Map 2-3 of your strongest wins to those outcomes",
       "Find a 2nd-degree connection for a warm intro / referral",
     ];
-    const tasks = baseTasks.concat(themeTasks).slice(0,5).map(txt=>({ type:"task", company:label, due:"This week", text:txt }));
+    const tasks = baseTasks.concat(themeTasks).slice(0,5).map(txt=>({ type:"task", company:label||"", due:"This week", text:txt }));
+    const advice = { type:"advice", text:
+      `How I'd approach this:\n`+
+      `1) Decode the role — list the 4-5 outcomes it's really hired to deliver.\n`+
+      `2) Map your proof — pick 2-3 of your strongest, most relevant wins that match those outcomes.\n`+
+      `3) Warm intro first — find a 2nd-degree connection and aim for a referral before applying cold.\n`+
+      `4) Tailor, don't spray — rewrite your resume summary + top bullets in the role's own language.\n`+
+      `5) Prep the narrative — draft 3 STAR stories tied to the top outcomes.` };
+    if (label) {
+      return {
+        reply: isJD ? `Read it — here's a tailored plan of attack for ${label}.` : `Let's build a real plan of attack for ${label}.`,
+        company: label,
+        actions: [
+          { type:"add_company", name:label, role:"Product Manager", stage:"Interested", text:`Add "${label}" to your pipeline (Interested)` },
+          advice, ...tasks,
+          { type:"followup_ask", text:"Want to draft the intro/referral message now? Type it and I'll save it as a task." },
+        ],
+      };
+    }
+    // Not confident about the company — give the plan but ASK rather than create a mangled card.
     return {
-      reply: isJD ? `Read it — here's a tailored plan of attack for the ${label} role.` : `Let's build a real plan of attack for the ${label} role.`,
-      company: label,
-      actions: [
-        { type:"add_company", name:label, role:label, stage:"Interested", text:`Add "${label}" to your pipeline (Interested)` },
-        { type:"advice", text:
-          `How I'd approach this:\n`+
-          `1) Decode the role — list the 4-5 outcomes it's really hired to deliver.\n`+
-          `2) Map your proof — pick 2-3 of your strongest, most relevant wins that match those outcomes.\n`+
-          `3) Warm intro first — find a 2nd-degree connection and aim for a referral before applying cold.\n`+
-          `4) Tailor, don't spray — rewrite your resume summary + top bullets in the role's own language.\n`+
-          `5) Prep the narrative — draft 3 STAR stories tied to the top outcomes.` },
-        ...tasks,
-        { type:"followup_ask", text:"Want to draft the intro/referral message now? Type it and I'll save it as a task." },
-      ],
+      reply: `Here's how I'd approach it. Which company is this for? Tell me and I'll add it to your pipeline.`,
+      company: null,
+      actions: [ advice, ...tasks ],
     };
   }
 
@@ -1609,7 +1697,7 @@ async function prepInterview(coId){
   const live = !!cfg.apiKey && !cfg.forceSafe;
   let plan, usedLive = false, failReason = "";
   if (live) {
-    try { const r = await callGemini("", prepPrompt(co)); plan = r.plan; usedLive = true; usageBump(); }
+    try { const r = await callLLM("", prepPrompt(co)); plan = r.plan; usedLive = true; usageBump(); }
     catch(e){ plan = prepSafe(co); failReason = (e&&e.message)||"error"; }
   } else {
     await new Promise(r=>setTimeout(r,450));
@@ -1898,7 +1986,7 @@ async function handleSend(){
   if (live && !isFollowUp && planCache[cacheKey]) {
     plan = planCache[cacheKey]; fromCache = true;
   } else if (live) {
-    try { const r = await callGemini(text); plan = r.plan; usedLive = true; if (!isFollowUp) planCache[cacheKey] = plan; usageBump(); }
+    try { const r = await callLLM(text); plan = r.plan; usedLive = true; if (!isFollowUp) planCache[cacheKey] = plan; usageBump(); }
     catch(e) { plan = safePlan(text); failReason = (e && e.message) ? e.message : "network error"; }
   } else {
     await new Promise(r=>setTimeout(r, 450));
@@ -1933,12 +2021,21 @@ async function handleSend(){
 }
 
 /* ---------- Modal / key ---------- */
+function fillModelOptions(){
+  const p = PROVIDERS[$("providerInput").value] || PROVIDERS.gemini;
+  $("modelInput").innerHTML = p.models.map(m=>`<option value="${m}">${m}</option>`).join("");
+  const cur = (cfg.provider === $("providerInput").value) ? cfg.model : "";
+  $("modelInput").value = cur && p.models.indexOf(cur)>=0 ? cur : p.defaultModel;
+  $("keyInput").placeholder = p.keyHint;
+  $("providerHint").innerHTML = `Get a free key at <a href="${p.keyUrl}" target="_blank" rel="noopener">${p.keyUrl.replace(/^https?:\/\//,"")}</a>`;
+}
 function openKey(){
   const sm = $("settingsMenu"); if (sm) sm.classList.remove("open");
+  $("providerInput").value = cfg.provider;
+  fillModelOptions();
   $("keyInput").value = cfg.apiKey;
-  $("modelInput").value = cfg.model;
   $("proxyInput").value = cfg.proxyUrl;
-  $("keyStatus").textContent = cfg.apiKey ? "Live mode active." : "No key set — running in safe mode.";
+  $("keyStatus").textContent = cfg.apiKey ? `Live mode active (${(PROVIDERS[cfg.provider]||{}).label||cfg.provider}).` : "No key set — running in safe mode.";
   $("keyModal").classList.add("open");
 }
 function closeKey(){ $("keyModal").classList.remove("open"); }
@@ -2024,11 +2121,15 @@ function init(){
   $("editNameHint").onclick = () => askName(false);
   $("titleEdit").onclick = () => askName(false);
   $("keyCancel").onclick = closeKey;
+  $("providerInput").onchange = fillModelOptions;
   $("keySave").onclick = () => {
+    cfg.provider = $("providerInput").value;
     cfg.apiKey = $("keyInput").value.trim();
     cfg.model = $("modelInput").value;
     cfg.proxyUrl = $("proxyInput").value.trim();
+    discoveredModels = null; planCache && Object.keys(planCache).forEach(k=>delete planCache[k]);
     try {
+      localStorage.setItem("jhcos_provider", cfg.provider);
       localStorage.setItem("jhcos_key", cfg.apiKey);
       localStorage.setItem("jhcos_model", cfg.model);
       localStorage.setItem("jhcos_proxy", cfg.proxyUrl);
