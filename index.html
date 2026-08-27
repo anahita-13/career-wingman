@@ -252,27 +252,34 @@ html[data-theme="dark"] .msg.user { background: var(--cp-accent-soft); color: va
 @keyframes bounce { 0%,60%,100%{ transform: translateY(0); opacity:.5 } 30%{ transform: translateY(-4px); opacity:1 } }
 
 /* Proposal */
-.proposal { border: 1.5px solid var(--cp-accent); border-radius: 14px; padding: 14px; background: var(--cp-accent-soft); }
-.proposal h4 { margin: 0 0 4px; font-size: 14px; }
-.proposal .summary { font-size: 13px; color: var(--cp-text-muted); margin: 0 0 12px; }
+.proposal { border: 1px solid var(--cp-border); border-radius: 14px; padding: 0; background: var(--cp-surface); overflow: hidden; box-shadow: 0 0 2px rgba(0,0,0,0.10), 0 2px 6px rgba(0,0,0,0.08); }
+.proposal-head { padding: 12px 16px; background: var(--cp-accent-soft); border-bottom: 1px solid var(--cp-border); }
+.proposal h4 { margin: 0; font-size: 14.5px; display: flex; align-items: center; gap: 7px; }
+.proposal h4 .co-chip { font-size: 11.5px; font-weight: 600; color: var(--cp-accent); background: var(--cp-surface); border: 1px solid var(--cp-accent); border-radius: 999px; padding: 1px 9px; }
+.proposal .summary { font-size: 12px; color: var(--cp-text-muted); margin: 4px 0 0; }
+.proposal-body { padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
 .action-row {
-  display: flex; align-items: flex-start; gap: 10px; padding: 9px 11px; margin-bottom: 8px;
+  display: flex; align-items: flex-start; gap: 11px; padding: 11px 12px;
   background: var(--cp-surface); border: 1px solid var(--cp-border); border-radius: 10px;
+  transition: border-color .12s, background .12s;
 }
-.action-row.off { opacity: .45; }
-.action-row .ico { font-size: 15px; line-height: 1.4; }
+.action-row:hover { border-color: var(--cp-border-strong); }
+.action-row.off { opacity: .4; }
+.action-row .ico { font-size: 16px; line-height: 1.35; width: 22px; text-align: center; flex: none; }
 .action-row .body { flex: 1; min-width: 0; }
-.action-row .kind { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--cp-accent); }
-.action-row .txt { font-size: 13.5px; margin-top: 1px; }
+.action-row .kind { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--cp-text-soft); margin-bottom: 2px; }
+.action-row .txt { font-size: 13.5px; line-height: 1.45; }
 .action-row input.edit {
   width: 100%; font-family: inherit; font-size: 13.5px; margin-top: 2px;
-  border: 1px solid var(--cp-border); border-radius: 8px; padding: 5px 8px;
+  border: 1px solid var(--cp-border); border-radius: 8px; padding: 6px 9px;
   background: var(--cp-bg-elevated); color: var(--cp-text);
 }
-.action-row .chk { margin-top: 3px; cursor: pointer; width: 15px; height: 15px; accent-color: var(--cp-accent); }
-.followup-ask { margin: 6px 0 10px; padding: 11px; border: 1px dashed var(--cp-accent); border-radius: 10px; background: var(--cp-surface); }
-.advice-row { background: var(--cp-bg-elevated); }
-.advice-txt { line-height: 1.6; color: var(--cp-text); }
+.action-row .chk { margin-top: 2px; cursor: pointer; width: 16px; height: 16px; accent-color: var(--cp-accent); flex: none; }
+.followup-ask { margin: 2px 0; padding: 12px; border: 1px dashed var(--cp-accent); border-radius: 10px; background: var(--cp-accent-soft); }
+.advice-row { background: var(--cp-bg-elevated); border-color: var(--cp-border); align-items: flex-start; }
+.advice-row .kind { color: var(--cp-accent); }
+.advice-txt { line-height: 1.65; color: var(--cp-text); font-size: 13px; }
+.proposal-actions { display: flex; gap: 8px; padding: 12px 14px; border-top: 1px solid var(--cp-border); background: var(--cp-surface-soft); }
 .li-links { display: flex; flex-direction: column; gap: 5px; margin-top: 8px; }
 .li-link { font-size: 13px; text-decoration: none; padding: 6px 10px; border: 1px solid var(--cp-border); border-radius: 8px; background: var(--cp-surface); color: var(--cp-link); transition: all .12s; }
 .li-link:hover { border-color: var(--cp-accent); background: var(--cp-accent-soft); }
@@ -1428,15 +1435,34 @@ Action types:
 Rules: if a JD/new role is present, start with add_company then advice then tasks pulled from the JD. For a follow-up tweak, return only the specific update_task/remove_task/calendar/stage action needed. If the user asks to find/connect with people at a company, include a find_people action. 3-6 actions max. JSON only.`;
 }
 
-/* Parse a plan from raw model text: strips fences/prose, then repairs if needed. */
+/* Parse a plan from raw model text: strips fences/prose, extracts the first balanced JSON object. */
 function parsePlanText(txt){
   let clean = String(txt||"").replace(/^```json\s*/i,"").replace(/```\s*$/,"").trim();
-  // If wrapped in prose, extract the first {...} block spanning the JSON object.
-  const first = clean.indexOf("{"), last = clean.lastIndexOf("}");
-  if (first > 0 && last > first) clean = clean.slice(first, last+1);
+  // Extract the FIRST balanced {...} object (handles repeated objects, prose, trailing junk).
+  const startI = clean.indexOf("{");
+  if (startI >= 0) {
+    let depth = 0, inStr = false, esc = false, endI = -1;
+    for (let i = startI; i < clean.length; i++) {
+      const ch = clean[i];
+      if (esc) { esc = false; continue; }
+      if (ch === "\\") { esc = true; continue; }
+      if (ch === '"') { inStr = !inStr; continue; }
+      if (inStr) continue;
+      if (ch === "{") depth++;
+      else if (ch === "}") { depth--; if (depth === 0) { endI = i; break; } }
+    }
+    if (endI > startI) clean = clean.slice(startI, endI + 1);
+  }
   let plan;
   try { plan = JSON.parse(clean); } catch(e){ plan = repairJson(clean); }
   if (!plan || !plan.actions || !Array.isArray(plan.actions) || !plan.actions.length) return null;
+  // Safety net: dedupe identical actions (some models echo the set).
+  const seen = new Set();
+  plan.actions = plan.actions.filter(a=>{
+    const key = JSON.stringify(a);
+    if (seen.has(key)) return false;
+    seen.add(key); return true;
+  });
   return plan;
 }
 
@@ -1899,9 +1925,13 @@ function renderProposal(plan, container){
   container.innerHTML = `<div class="who">Career Wingman</div>
     <div style="margin-bottom:10px">${esc(plan.reply || "Here's my proposed plan:")}</div>
     <div class="proposal" data-pid="${pid}">
-      <h4>Proposed plan${plan.company?` &middot; ${esc(plan.company)}`:""}</h4>
-      <p class="summary">Nothing changes until you approve. You can tweak or cancel.</p>
-      ${rows}
+      <div class="proposal-head">
+        <h4>Proposed plan ${plan.company?`<span class="co-chip">${esc(plan.company)}</span>`:""}</h4>
+        <p class="summary">Nothing changes until you approve. Untick anything you don't want.</p>
+      </div>
+      <div class="proposal-body">
+        ${rows}
+      </div>
       <div class="proposal-actions">
         <button class="btn btn-primary btn-sm" data-act="approve">Approve</button>
         <button class="btn btn-sm" data-act="tweak">Tweak</button>
