@@ -2278,14 +2278,17 @@ function init(){
   $("keySave").onclick = () => {
     const newProvider = $("providerInput").value;
     const newKey = $("keyInput").value.trim();
-    // Warn if the key format clearly doesn't match the chosen provider.
-    const mismatch =
-      (newProvider === "gemini" && newKey && !/^AIza/i.test(newKey)) ||
-      (newProvider === "groq" && newKey && !/^gsk_/i.test(newKey)) ||
-      (newProvider === "openrouter" && newKey && !/^sk-or-/i.test(newKey));
-    if (mismatch) {
-      const label = (PROVIDERS[newProvider]||{}).keyHint || "";
-      if (!confirm(`That key doesn't look like a ${(PROVIDERS[newProvider]||{}).label} key (expected format "${label}"). Save it anyway?`)) return;
+    // Only warn on an OBVIOUS cross-provider paste (a key that clearly belongs to a different provider).
+    // We never assert what the CHOSEN provider's key must look like — those formats change and cause false alarms.
+    const looksLikeGroq = /^gsk_/i.test(newKey);
+    const looksLikeOpenRouter = /^sk-or-/i.test(newKey);
+    let wrongProvider = "";
+    if (newKey) {
+      if (newProvider !== "groq" && looksLikeGroq) wrongProvider = "Groq";
+      else if (newProvider !== "openrouter" && looksLikeOpenRouter) wrongProvider = "OpenRouter";
+    }
+    if (wrongProvider) {
+      if (!confirm(`That looks like a ${wrongProvider} key, but you've selected ${(PROVIDERS[newProvider]||{}).label}. Save it anyway?`)) return;
     }
     cfg.provider = newProvider;
     cfg.apiKey = newKey;
