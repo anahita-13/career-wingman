@@ -1339,6 +1339,40 @@ function guardInput(text){
   return { block:false };
 }
 
+/* Read-only questions about EXISTING data ("what are my to-dos", "where does my pipeline stand")
+   → answered instantly from local state. No AI call, so it never errors or hits a rate limit. */
+function isReadQuery(text){
+  const s = text.toLowerCase();
+  // If it describes something new happening, it's an update to plan — not a read query.
+  if (/\b(applied|rejected|got (an?|the)?\s*(reject|interview|offer|referral)|offer|had a|coffee chat|met with|add (a )?task|schedule|reschedule|move|rename|remove|delete|change|set (a|the)?\s*(due|date|reminder)|follow up on|connect me|find people)\b/.test(s)) return null;
+  if (/\b(to.?dos?|tasks?|my (list|plan|day|agenda|priorities)|what.?s (next|due|left|on my (plate|list|agenda))|what should i (do|work on|focus on|tackle)|what do i (need|have) to do|priorit(y|ies))\b/.test(s)) return "tasks";
+  if (/\b(pipeline|where (do|does|are) (things|we|i|my)|my (companies|roles|applications)|which (companies|roles)|how many (roles|companies|interviews|applications))\b/.test(s)) return "pipeline";
+  return null;
+}
+function renderQueryAnswer(kind){
+  const esc2 = esc;
+  if (kind === "tasks"){
+    const open = state.tasks.filter(t=>!t.done);
+    if (!open.length) return `You're all caught up — no open tasks right now. Tell me what's happening with a role and I'll build the next steps.`;
+    const overdue = open.filter(isOverdue);
+    const week = open.filter(t=>!isOverdue(t) && isDueThisWeek(t));
+    const later = open.filter(t=>!isOverdue(t) && !isDueThisWeek(t));
+    const row = t => `<li><strong>${esc2(t.title)}</strong>${t.company?` <span style="color:var(--cp-text-soft)">· ${esc2(t.company)}</span>`:""}${t.due?` <span style="color:var(--cp-text-soft)">(${esc2(t.due)})</span>`:""}</li>`;
+    let html = `Here's what's on your plate — <strong>${open.length}</strong> open task${open.length>1?"s":""}:`;
+    if (overdue.length) html += `<div style="margin-top:8px;color:var(--cp-danger)"><strong>&#9888; Overdue</strong></div><ul style="margin:4px 0 0 18px;padding:0">${overdue.map(row).join("")}</ul>`;
+    if (week.length) html += `<div style="margin-top:8px"><strong>This week</strong></div><ul style="margin:4px 0 0 18px;padding:0">${week.map(row).join("")}</ul>`;
+    if (later.length) html += `<div style="margin-top:8px"><strong>Later / undated</strong></div><ul style="margin:4px 0 0 18px;padding:0">${later.map(row).join("")}</ul>`;
+    html += `<div style="margin-top:10px;color:var(--cp-text-soft)">Want me to prep one of these, or add something new? Just tell me what happened.</div>`;
+    return html;
+  }
+  if (kind === "pipeline"){
+    if (!state.companies.length) return `Your pipeline is empty right now. Tell me about a role you applied to and I'll add it.`;
+    const row = c => `<li><strong>${esc2(c.name)}</strong> — ${esc2(c.role||"role")} <span style="color:var(--cp-text-soft)">· ${esc2(c.stage)}</span></li>`;
+    return `Here's where things stand — <strong>${state.companies.length}</strong> role${state.companies.length>1?"s":""} in your pipeline:<ul style="margin:6px 0 0 18px;padding:0">${state.companies.map(row).join("")}</ul><div style="margin-top:10px;color:var(--cp-text-soft)">Tell me about any update and I'll propose the next steps.</div>`;
+  }
+  return null;
+}
+
 /* ---------- Cloud sync (optional Worker + KV) ---------- */
 function syncEndpoint(){
   const base = cfg.syncUrl.replace(/\/+$/,"");
@@ -2113,6 +2147,17 @@ async function handleSend(){
       addBotMsg(`<span style="color:${(g.offtopic || g.greeting) ? "var(--cp-text-muted)" : "var(--cp-danger)"}">${esc(g.message)}</span>`);
       busy = false; $("sendBtn").disabled = false;
       return;
+    }
+    // Read-only questions about existing data → answer instantly from state (no AI call, never errors).
+    const qk = isReadQuery(text);
+    if (qk) {
+      const ans = renderQueryAnswer(qk);
+      if (ans) {
+        addBotMsg(ans);
+        pushConvo("assistant", "(showed the user their existing " + qk + ")");
+        busy = false; $("sendBtn").disabled = false;
+        return;
+      }
     }
   }
 
