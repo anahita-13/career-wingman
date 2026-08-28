@@ -171,6 +171,21 @@ header.app {
 .resume-sub { font-size: 11.5px; color: var(--cp-text-soft); }
 .resume-actions { display: flex; gap: 6px; flex-shrink: 0; }
 .icon-btn.primary { background: var(--cp-accent); color: #fff; border-color: var(--cp-accent); }
+.resume-drop {
+  border: 1.5px dashed var(--cp-border); border-radius: 12px; padding: 20px 16px; text-align: center;
+  cursor: pointer; transition: border-color .15s, background .15s; background: var(--cp-surface);
+}
+.resume-drop:hover, .resume-drop.drag { border-color: var(--cp-accent); background: rgba(0,120,212,0.04); }
+.resume-drop .rd-ico { font-size: 26px; line-height: 1; }
+.resume-drop .rd-title { font-size: 13.5px; font-weight: 600; color: var(--cp-text); margin-top: 6px; }
+.resume-drop .rd-sub { font-size: 11.5px; color: var(--cp-text-soft); margin-top: 2px; }
+.resume-drop .rd-status { font-size: 12px; margin-top: 8px; min-height: 16px; }
+.resume-drop .rd-status.ok { color: #107c10; }
+.resume-drop .rd-status.err { color: #c50f1f; }
+.resume-drop .rd-status.busy { color: var(--cp-text-soft); }
+.resume-paste-toggle { margin-top: 10px; font-size: 12px; color: var(--cp-text-soft); }
+.resume-paste-toggle summary { cursor: pointer; }
+.resume-paste-toggle textarea { margin-top: 8px; }
 .icon-btn.primary:hover { filter: brightness(1.05); color: #fff; }
 .stat-pill {
   display: flex; align-items: baseline; gap: 7px; padding: 9px 14px; border-radius: 12px;
@@ -662,7 +677,7 @@ function t(){ return "id" + Date.now().toString(36) + Math.random().toString(36)
 
 function example() {
   return {
-    profile: { name: "", resume: { text:"", updatedAt:0 } },
+    profile: { name: "", resume: { text:"", updatedAt:0, fileName:"", fileType:"" } },
     companies: [
       { id:t(), name:"Company X", role:"Senior PM", stage:"Applied",
         steps:["Lead","Applied","Recruiter screen","Interview","Offer"], stepIdx:1,
@@ -683,7 +698,7 @@ function example() {
     activity: [],
   };
 }
-function emptyState(name){ return { profile:{ name:name||"", resume:{ text:"", updatedAt:0 } }, companies:[], tasks:[], calendar:[], activity:[] }; }
+function emptyState(name){ return { profile:{ name:name||"", resume:{ text:"", updatedAt:0, fileName:"", fileType:"" } }, companies:[], tasks:[], calendar:[], activity:[] }; }
 
 /* Ensure every company has a notes[] array; migrate legacy string `note`. */
 function normalizeCompany(c){
@@ -734,7 +749,9 @@ function loadState(){
     const s = JSON.parse(raw);
     if (!s || !Array.isArray(s.companies)) return null;
     s.profile = s.profile || { name:"" };
-    if (!s.profile.resume || typeof s.profile.resume !== "object") s.profile.resume = { text:"", updatedAt:0 };
+    if (!s.profile.resume || typeof s.profile.resume !== "object") s.profile.resume = { text:"", updatedAt:0, fileName:"", fileType:"" };
+    if (typeof s.profile.resume.fileName !== "string") s.profile.resume.fileName = "";
+    if (typeof s.profile.resume.fileType !== "string") s.profile.resume.fileType = "";
     s.tasks = s.tasks || []; s.calendar = s.calendar || []; s.activity = s.activity || [];
     (s.companies||[]).forEach(normalizeCompany);
     return s;
@@ -873,31 +890,36 @@ function renderResume(){
   if (has){
     const words = r.text.trim().split(/\s+/).length;
     const when = r.updatedAt ? new Date(r.updatedAt).toLocaleDateString("en-US",{ month:"short", day:"numeric" }) : "—";
+    const label = r.fileName ? esc(r.fileName) : "Résumé";
+    const meta = r.fileName ? `${label} &middot; updated ${when}` : `updated ${when} &middot; ${words} words`;
     el.innerHTML = `<div class="resume-card ok">
       <span class="resume-ico">&#128196;</span>
-      <span class="resume-main"><strong>Latest r&eacute;sum&eacute; on file</strong><span class="resume-sub">updated ${when} &middot; ${words} words — I use it to tailor plans and spot strengths &amp; gaps vs. each job</span></span>
-      <span class="resume-actions"><button class="icon-btn" id="resumeView">View</button><button class="icon-btn" id="resumeEdit">Update</button></span></div>`;
+      <span class="resume-main"><strong>Latest r&eacute;sum&eacute; on file</strong><span class="resume-sub">${meta} — I use it to tailor plans and spot strengths &amp; gaps vs. each job</span></span>
+      <span class="resume-actions"><button class="icon-btn" id="resumeView">View</button><button class="icon-btn" id="resumeEdit">Replace</button></span></div>`;
   } else {
     el.innerHTML = `<div class="resume-card empty">
       <span class="resume-ico">&#128196;</span>
-      <span class="resume-main"><strong>Add your latest r&eacute;sum&eacute;</strong><span class="resume-sub">paste it once — then every job plan compares your real background to the role</span></span>
-      <span class="resume-actions"><button class="icon-btn primary" id="resumeEdit">Add r&eacute;sum&eacute;</button></span></div>`;
+      <span class="resume-main"><strong>Add your latest r&eacute;sum&eacute;</strong><span class="resume-sub">attach a PDF or Word file once — then every job plan compares your real background to the role</span></span>
+      <span class="resume-actions"><button class="icon-btn primary" id="resumeEdit">Attach r&eacute;sum&eacute;</button></span></div>`;
   }
   const ed = $("resumeEdit"); if (ed) ed.onclick = ()=>openResume();
   const vw = $("resumeView"); if (vw) vw.onclick = ()=>openResume();
 }
 function openResume(){
-  const r = (state.profile.resume) || { text:"", updatedAt:0 };
+  const r = (state.profile.resume) || { text:"", updatedAt:0, fileName:"", fileType:"" };
   openEdit("Your r\u00e9sum\u00e9", [
-    { key:"text", type:"textarea", label:"Paste your r\u00e9sum\u00e9 as plain text", value:r.text||"", placeholder:"Paste your r\u00e9sum\u00e9 here — experience, skills, achievements. Stored only on this device." }
+    { key:"resumefile", type:"file", label:"Attach your r\u00e9sum\u00e9 file",
+      value:r.text||"", fileName:r.fileName||"", fileType:r.fileType||"" }
   ], (v)=>{
     const text = (v.text||"").trim();
-    state.profile.resume = { text, updatedAt: text ? Date.now() : 0 };
+    const fileName = (v.fileName||"").trim();
+    const fileType = (v.fileType||"").trim();
+    state.profile.resume = { text, updatedAt: text ? Date.now() : 0, fileName: text ? fileName : "", fileType: text ? fileType : "" };
     saveState(); closeEdit(); renderResume();
     addBotMsg(text
-      ? `Saved your r&eacute;sum&eacute; (${text.split(/\s+/).length} words). I'll compare it to each job description and call out strengths &amp; gaps.`
-      : `Cleared your r&eacute;sum&eacute;. Add it anytime to get fit-based advice.`);
-  }, "Stored only on this device. Sent to your chosen AI provider only when you ask for a plan, so it can compare your background to the role.");
+      ? `Saved your r&eacute;sum&eacute;${fileName ? ` (${esc(fileName)})` : ` (${text.split(/\s+/).length} words)`}. I'll compare it to each job description and call out strengths &amp; gaps.`
+      : `Cleared your r&eacute;sum&eacute;. Attach it anytime to get fit-based advice.`);
+  }, "Attach a PDF, Word (.docx) or .txt file. Stored only on this device — its text is sent to your chosen AI provider only when you ask for a plan, so it can compare your background to the role.");
 }
 
 function renderActivity(){
@@ -1237,6 +1259,26 @@ function openEdit(title, fields, onSave, subtitle){
     if (f.type === "textarea") {
       return `<div class="field"><label>${esc(f.label)}</label><textarea data-f="${f.key}">${esc(f.value||"")}</textarea></div>`;
     }
+    if (f.type === "file") {
+      const hasText = !!(f.value && f.value.trim());
+      const words = hasText ? f.value.trim().split(/\s+/).length : 0;
+      const statusHtml = hasText
+        ? `<div class="rd-status ok" data-rd-status>&#10003; ${f.fileName ? esc(f.fileName) : "R\u00e9sum\u00e9 on file"} &middot; ${words} words extracted</div>`
+        : `<div class="rd-status" data-rd-status></div>`;
+      return `<div class="field"><label>${esc(f.label)}</label>
+        <div class="resume-drop" data-rd-zone>
+          <input type="file" accept=".pdf,.docx,.txt,.text" data-rd-input style="display:none" />
+          <div class="rd-ico">&#128206;</div>
+          <div class="rd-title">Choose a file or drag it here</div>
+          <div class="rd-sub">PDF, Word (.docx) or plain text (.txt)</div>
+          ${statusHtml}
+        </div>
+        <details class="resume-paste-toggle"><summary>or paste as text instead</summary>
+          <textarea data-f="text" placeholder="Paste your r\u00e9sum\u00e9 here — experience, skills, achievements.">${esc(f.value||"")}</textarea>
+        </details>
+        <input type="hidden" data-f="fileName" value="${esc(f.fileName||"")}" />
+        <input type="hidden" data-f="fileType" value="${esc(f.fileType||"")}" /></div>`;
+    }
     return `<div class="field"><label>${esc(f.label)}</label><input data-f="${f.key}" value="${esc(f.value||"")}" placeholder="${esc(f.placeholder||"")}" /></div>`;
   }).join("");
   editOnSave = () => {
@@ -1244,8 +1286,81 @@ function openEdit(title, fields, onSave, subtitle){
     $("editFields").querySelectorAll("[data-f]").forEach(el=>{ vals[el.dataset.f] = el.value.trim(); });
     onSave(vals);
   };
+  wireResumeDrop();
   $("editModal").classList.add("open");
   const first = $("editFields").querySelector("[data-f]"); if (first) first.focus();
+}
+function wireResumeDrop(){
+  const zone = $("editFields").querySelector("[data-rd-zone]");
+  if (!zone) return;
+  const input = zone.querySelector("[data-rd-input]");
+  const status = zone.querySelector("[data-rd-status]");
+  const textEl = $("editFields").querySelector('textarea[data-f="text"]');
+  const nameEl = $("editFields").querySelector('input[data-f="fileName"]');
+  const typeEl = $("editFields").querySelector('input[data-f="fileType"]');
+  const setStatus = (cls, html)=>{ status.className = "rd-status" + (cls ? " "+cls : ""); status.innerHTML = html; };
+  const handle = async (file)=>{
+    if (!file) return;
+    if (file.size > 12 * 1024 * 1024){ setStatus("err","&#10007; File is too large (max 12 MB)."); return; }
+    setStatus("busy","Reading "+esc(file.name)+"…");
+    try {
+      const text = (await extractResumeText(file) || "").trim();
+      if (!text){ setStatus("err","&#10007; Couldn't read any text from that file. Try a .txt or paste it below."); return; }
+      textEl.value = text;
+      nameEl.value = file.name;
+      typeEl.value = file.type || "";
+      setStatus("ok","&#10003; "+esc(file.name)+" &middot; "+text.split(/\s+/).length+" words extracted");
+    } catch(err){
+      console.error(err);
+      setStatus("err","&#10007; "+esc(err && err.message ? err.message : "Couldn't read that file")+". Try a .txt or paste it below.");
+    }
+  };
+  zone.onclick = (e)=>{ if (e.target.tagName !== "INPUT") input.click(); };
+  input.onchange = ()=>{ if (input.files && input.files[0]) handle(input.files[0]); };
+  zone.ondragover = (e)=>{ e.preventDefault(); zone.classList.add("drag"); };
+  zone.ondragleave = ()=>zone.classList.remove("drag");
+  zone.ondrop = (e)=>{ e.preventDefault(); zone.classList.remove("drag"); if (e.dataTransfer.files && e.dataTransfer.files[0]) handle(e.dataTransfer.files[0]); };
+}
+/* Extract plain text from a résumé file. .txt reads directly; PDF/DOCX lazy-load a parser from CDN. */
+function loadScriptOnce(src){
+  return new Promise((resolve, reject)=>{
+    if (document.querySelector('script[data-src="'+src+'"]')){ resolve(); return; }
+    const s = document.createElement("script");
+    s.src = src; s.setAttribute("data-src", src);
+    s.onload = ()=>resolve();
+    s.onerror = ()=>reject(new Error("Couldn't load parser (are you online?)"));
+    document.head.appendChild(s);
+  });
+}
+async function extractResumeText(file){
+  const name = (file.name||"").toLowerCase();
+  const ext = name.slice(name.lastIndexOf(".")+1);
+  if (ext === "txt" || ext === "text" || file.type === "text/plain"){
+    return await file.text();
+  }
+  if (ext === "docx" || file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document"){
+    await loadScriptOnce("https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js");
+    const buf = await file.arrayBuffer();
+    const res = await window.mammoth.extractRawText({ arrayBuffer: buf });
+    return (res && res.value) || "";
+  }
+  if (ext === "pdf" || file.type === "application/pdf"){
+    await loadScriptOnce("https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js");
+    const pdfjs = window.pdfjsLib;
+    if (pdfjs && pdfjs.GlobalWorkerOptions) pdfjs.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+    const buf = await file.arrayBuffer();
+    const pdf = await pdfjs.getDocument({ data: buf }).promise;
+    let out = "";
+    for (let p = 1; p <= pdf.numPages; p++){
+      const page = await pdf.getPage(p);
+      const content = await page.getTextContent();
+      out += content.items.map(it=>it.str).join(" ") + "\n";
+    }
+    return out;
+  }
+  if (ext === "doc"){ throw new Error("Old .doc isn't supported — save as .docx or .pdf"); }
+  // Last resort: try reading as text
+  return await file.text();
 }
 function closeEdit(){
   $("editModal").classList.remove("open"); editOnSave = null;
