@@ -158,6 +158,20 @@ header.app {
 
 /* Stats strip */
 .stats-strip { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; }
+.resume-strip { margin: -6px 0 18px; }
+.resume-card {
+  display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 12px;
+  background: var(--cp-surface); border: 1px solid var(--cp-border);
+  box-shadow: 0 0 2px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.14);
+}
+.resume-card.empty { border-style: dashed; }
+.resume-ico { font-size: 20px; line-height: 1; }
+.resume-main { display: flex; flex-direction: column; gap: 1px; flex: 1; min-width: 0; }
+.resume-main strong { font-size: 13px; color: var(--cp-text); }
+.resume-sub { font-size: 11.5px; color: var(--cp-text-soft); }
+.resume-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.icon-btn.primary { background: var(--cp-accent); color: #fff; border-color: var(--cp-accent); }
+.icon-btn.primary:hover { filter: brightness(1.05); color: #fff; }
 .stat-pill {
   display: flex; align-items: baseline; gap: 7px; padding: 9px 14px; border-radius: 12px;
   background: var(--cp-surface); border: 1px solid var(--cp-border);
@@ -492,6 +506,9 @@ a { color: var(--cp-link); }
   <!-- Stats strip -->
   <div class="stats-strip" id="statsStrip"></div>
 
+  <!-- Résumé -->
+  <div class="resume-strip" id="resumeStrip"></div>
+
   <!-- Pipeline -->
   <div class="section-title" style="margin-bottom:10px">Pipeline
     <span class="spacer"></span>
@@ -645,7 +662,7 @@ function t(){ return "id" + Date.now().toString(36) + Math.random().toString(36)
 
 function example() {
   return {
-    profile: { name: "" },
+    profile: { name: "", resume: { text:"", updatedAt:0 } },
     companies: [
       { id:t(), name:"Company X", role:"Senior PM", stage:"Applied",
         steps:["Lead","Applied","Recruiter screen","Interview","Offer"], stepIdx:1,
@@ -666,7 +683,7 @@ function example() {
     activity: [],
   };
 }
-function emptyState(name){ return { profile:{ name:name||"" }, companies:[], tasks:[], calendar:[], activity:[] }; }
+function emptyState(name){ return { profile:{ name:name||"", resume:{ text:"", updatedAt:0 } }, companies:[], tasks:[], calendar:[], activity:[] }; }
 
 /* Ensure every company has a notes[] array; migrate legacy string `note`. */
 function normalizeCompany(c){
@@ -717,6 +734,7 @@ function loadState(){
     const s = JSON.parse(raw);
     if (!s || !Array.isArray(s.companies)) return null;
     s.profile = s.profile || { name:"" };
+    if (!s.profile.resume || typeof s.profile.resume !== "object") s.profile.resume = { text:"", updatedAt:0 };
     s.tasks = s.tasks || []; s.calendar = s.calendar || []; s.activity = s.activity || [];
     (s.companies||[]).forEach(normalizeCompany);
     return s;
@@ -846,6 +864,40 @@ function renderStats(){
     pill(interviews, interviews===1?"interview":"interviews") +
     pill(dueWeek, "due this week") +
     (overdue > 0 ? pill(overdue, "overdue", "alert") : "");
+}
+
+function renderResume(){
+  const el = $("resumeStrip"); if (!el) return;
+  const r = (state.profile && state.profile.resume) || { text:"", updatedAt:0 };
+  const has = !!(r.text && r.text.trim());
+  if (has){
+    const words = r.text.trim().split(/\s+/).length;
+    const when = r.updatedAt ? new Date(r.updatedAt).toLocaleDateString("en-US",{ month:"short", day:"numeric" }) : "—";
+    el.innerHTML = `<div class="resume-card ok">
+      <span class="resume-ico">&#128196;</span>
+      <span class="resume-main"><strong>Latest r&eacute;sum&eacute; on file</strong><span class="resume-sub">updated ${when} &middot; ${words} words — I use it to tailor plans and spot strengths &amp; gaps vs. each job</span></span>
+      <span class="resume-actions"><button class="icon-btn" id="resumeView">View</button><button class="icon-btn" id="resumeEdit">Update</button></span></div>`;
+  } else {
+    el.innerHTML = `<div class="resume-card empty">
+      <span class="resume-ico">&#128196;</span>
+      <span class="resume-main"><strong>Add your latest r&eacute;sum&eacute;</strong><span class="resume-sub">paste it once — then every job plan compares your real background to the role</span></span>
+      <span class="resume-actions"><button class="icon-btn primary" id="resumeEdit">Add r&eacute;sum&eacute;</button></span></div>`;
+  }
+  const ed = $("resumeEdit"); if (ed) ed.onclick = ()=>openResume();
+  const vw = $("resumeView"); if (vw) vw.onclick = ()=>openResume();
+}
+function openResume(){
+  const r = (state.profile.resume) || { text:"", updatedAt:0 };
+  openEdit("Your r\u00e9sum\u00e9", [
+    { key:"text", type:"textarea", label:"Paste your r\u00e9sum\u00e9 as plain text", value:r.text||"", placeholder:"Paste your r\u00e9sum\u00e9 here — experience, skills, achievements. Stored only on this device." }
+  ], (v)=>{
+    const text = (v.text||"").trim();
+    state.profile.resume = { text, updatedAt: text ? Date.now() : 0 };
+    saveState(); closeEdit(); renderResume();
+    addBotMsg(text
+      ? `Saved your r&eacute;sum&eacute; (${text.split(/\s+/).length} words). I'll compare it to each job description and call out strengths &amp; gaps.`
+      : `Cleared your r&eacute;sum&eacute;. Add it anytime to get fit-based advice.`);
+  }, "Stored only on this device. Sent to your chosen AI provider only when you ask for a plan, so it can compare your background to the role.");
 }
 
 function renderActivity(){
@@ -1142,7 +1194,7 @@ function renderChips() {
 function esc(s){ return String(s).replace(/[&<>"']/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m])); }
 
 /* Build real LinkedIn people-search URLs for a company + role. Opens live results — no invented data. */
-function linkedInSearches(company, role){
+function linkedInSearches(company, role, domain){
   const co = (company||"").replace(/^company\s+/i,"").trim();
   // Extract a real searchable title from the role (handles "Target team — PM", "Senior PM", etc.)
   let r = String(role||"").trim();
@@ -1156,13 +1208,19 @@ function linkedInSearches(company, role){
     // fall back to the part before a dash, or a generic PM
     r = r.replace(/[—–-].*$/,"").trim() || "Product Manager";
   }
+  const dom = String(domain||"").trim();
   const q = (kw)=> "https://www.linkedin.com/search/results/people/?keywords=" + encodeURIComponent(kw);
-  return [
+  const out = [
     { label:`${r} at ${co}`, url: q(`${r} ${co}`) },
+  ];
+  // Same-domain people across ANY company — best for warm intros / peers in the field.
+  if (dom) out.push({ label:`${r}s in ${dom} (any company)`, url: q(`${r} ${dom}`) });
+  out.push(
     { label:`Recruiters / Talent at ${co}`, url: q(`recruiter ${co}`) },
     { label:`Hiring managers at ${co}`, url: q(`hiring manager ${co}`) },
-    { label:`Everyone at ${co}`, url: q(co) },
-  ];
+    { label:`Everyone at ${co}`, url: q(co) }
+  );
+  return out;
 }
 
 /* ---------- Generic edit modal ---------- */
@@ -1343,6 +1401,8 @@ function guardInput(text){
    → answered instantly from local state. No AI call, so it never errors or hits a rate limit. */
 function isReadQuery(text){
   const s = text.toLowerCase();
+  // Read-queries are short. A long paste is a résumé/JD/update, never "show me my list".
+  if (text.trim().length > 240) return null;
   // If it describes something new happening, it's an update to plan — not a read query.
   if (/\b(applied|rejected|got (an?|the)?\s*(reject|interview|offer|referral)|offer|had a|coffee chat|met with|add (a )?task|schedule|reschedule|move|rename|remove|delete|change|set (a|the)?\s*(due|date|reminder)|follow up on|connect me|find people)\b/.test(s)) return null;
   if (/\b(to.?dos?|tasks?|my (list|plan|day|agenda|priorities)|what.?s (next|due|left|on my (plate|list|agenda))|what should i (do|work on|focus on|tackle)|what do i (need|have) to do|priorit(y|ies))\b/.test(s)) return "tasks";
@@ -1354,14 +1414,27 @@ function renderQueryAnswer(kind){
   if (kind === "tasks"){
     const open = state.tasks.filter(t=>!t.done);
     if (!open.length) return `You're all caught up — no open tasks right now. Tell me what's happening with a role and I'll build the next steps.`;
-    const overdue = open.filter(isOverdue);
-    const week = open.filter(t=>!isOverdue(t) && isDueThisWeek(t));
-    const later = open.filter(t=>!isOverdue(t) && !isDueThisWeek(t));
-    const row = t => `<li><strong>${esc2(t.title)}</strong>${t.company?` <span style="color:var(--cp-text-soft)">· ${esc2(t.company)}</span>`:""}${t.due?` <span style="color:var(--cp-text-soft)">(${esc2(t.due)})</span>`:""}</li>`;
+    const now = today0();
+    const in7 = new Date(now); in7.setDate(in7.getDate()+7);
+    const in14 = new Date(now); in14.setDate(in14.getDate()+14);
+    const bucketOf = t => {
+      if (isOverdue(t)) return "overdue";
+      const d = parseDate(t.due);
+      if (d) { if (d <= in7) return "week"; if (d <= in14) return "next"; return "later"; }
+      const s = (t.due||"").toLowerCase();
+      if (/next week/.test(s)) return "next";
+      if (/this week|today|tomorrow|eod|end of (day|week)/.test(s)) return "week";
+      return "later";
+    };
+    const groups = { overdue:[], week:[], next:[], later:[] };
+    open.forEach(t => groups[bucketOf(t)].push(t));
+    const row = t => `<li><strong>${esc(t.title)}</strong>${t.company?` <span style="color:var(--cp-text-soft)">· ${esc(t.company)}</span>`:""}${t.due?` <span style="color:var(--cp-text-soft)">(${esc(t.due)})</span>`:""}</li>`;
+    const section = (arr, label, color) => arr.length ? `<div style="margin-top:8px${color?";color:"+color:""}"><strong>${label}</strong></div><ul style="margin:4px 0 0 18px;padding:0">${arr.map(row).join("")}</ul>` : "";
     let html = `Here's what's on your plate — <strong>${open.length}</strong> open task${open.length>1?"s":""}:`;
-    if (overdue.length) html += `<div style="margin-top:8px;color:var(--cp-danger)"><strong>&#9888; Overdue</strong></div><ul style="margin:4px 0 0 18px;padding:0">${overdue.map(row).join("")}</ul>`;
-    if (week.length) html += `<div style="margin-top:8px"><strong>This week</strong></div><ul style="margin:4px 0 0 18px;padding:0">${week.map(row).join("")}</ul>`;
-    if (later.length) html += `<div style="margin-top:8px"><strong>Later / undated</strong></div><ul style="margin:4px 0 0 18px;padding:0">${later.map(row).join("")}</ul>`;
+    html += section(groups.overdue, "&#9888; Overdue", "var(--cp-danger)");
+    html += section(groups.week, "This week", "");
+    html += section(groups.next, "Next week", "");
+    html += section(groups.later, "Later / undated", "");
     html += `<div style="margin-top:10px;color:var(--cp-text-soft)">Want me to prep one of these, or add something new? Just tell me what happened.</div>`;
     return html;
   }
@@ -1449,6 +1522,10 @@ function buildPrompt(userText){
   const openTasks = state.tasks.filter(t=>!t.done).slice(0,8).map(t=>`"${t.title}"${t.due?" (due "+t.due+")":""}`).join(", ") || "none";
   const jd = looksLikeJD(userText);
   const today = new Date().toLocaleDateString("en-US", { weekday:"long", month:"long", day:"numeric", year:"numeric" });
+  const resumeText = (state.profile && state.profile.resume && state.profile.resume.text || "").trim();
+  const resumeBlock = resumeText
+    ? `\nThe user's RÉSUMÉ (use it to judge real fit — cite genuine strengths and honest gaps, never invent):\n"""${resumeText.slice(0, 3500)}"""\n`
+    : "";
   const history = convo.length
     ? "Recent conversation (oldest first), for resolving follow-ups like \"make that Friday\":\n" +
       convo.map(m=>`${m.role === "user" ? "User" : "You"}: ${m.text}`).join("\n") + "\n\n"
@@ -1456,16 +1533,17 @@ function buildPrompt(userText){
   return `You are "Career Wingman", an AI copilot running a product manager's job search. Today is ${today}. You PROPOSE plans; you never act on your own.
 Existing pipeline: ${names}.
 Current open tasks: ${openTasks}.
-${history}${jd ? "The user pasted a JOB DESCRIPTION. Read it, extract the real role title, and tailor everything to its actual requirements." : "The user sent a short message. If it refers to something earlier (e.g. \"make that Friday\", \"add one more\", \"change the second task\"), use the recent conversation and current tasks to figure out what they mean and propose the specific edit."}
+${resumeBlock}${history}${jd ? "The user pasted a JOB DESCRIPTION. Read it, extract the real role title, and tailor everything to its actual requirements." : "The user sent a short message. If it refers to something earlier (e.g. \"make that Friday\", \"add one more\", \"change the second task\"), use the recent conversation and current tasks to figure out what they mean and propose the specific edit."}
 User input:
-"""${userText.slice(0, jd ? 4000 : 800)}"""
+"""${userText.slice(0, jd ? 8000 : 800)}"""
 
 Return ONLY JSON (no fences):
 {"reply":"one short sentence","company":"existing name | new role name | null","actions":[...]}
 Action types:
-- {"type":"add_company","name":"<short label>","role":"<title>","stage":"Interested","text":"..."} — when a NEW role/JD/link is introduced.
+- {"type":"add_company","name":"<short label>","role":"<title>","stage":"Interested","domain":"<the role's field, 1-3 words e.g. payments, developer tools, cloud security, collaboration>","text":"..."} — when a NEW role/JD/link is introduced.
 - {"type":"update_company","match":"<words from the existing company name>","name":"<new name, optional>","role":"<new role, optional>","note":"<new note, optional>","text":"..."} — to RENAME or edit an EXISTING company (use for "rename Company X to Acme", "change the role to Group PM").
-- {"type":"find_people","company":"<company name>","role":"<role/title to search>","text":"..."} — when the user wants to find people at a company to network with / connect with on LinkedIn. The app turns this into real LinkedIn search links; you don't invent names.
+- {"type":"find_people","company":"<company name>","role":"<role/title to search>","domain":"<the field/domain, e.g. payments, developer tools>","text":"..."} — when the user wants to find people at a company to network with / connect with on LinkedIn. The app turns this into real LinkedIn search links; you don't invent names.
+- {"type":"advice","text":"Fit for <role>:\\nStrengths:\\n• ...\\nGaps to address:\\n• ..."} — ONLY when a résumé is on file AND a JD/new role is present: compare the résumé to THIS role and give 2-3 genuine strengths and 1-2 honest gaps. Cite real résumé details; never flatter, never invent.
 - {"type":"advice","text":"How I'd approach this:\\n1) ...\\n2) ..."} — 3-5 concrete, tailored numbered steps referencing the user's PM/eng background and THIS role's real requirements. Never generic, never an echo.
 - {"type":"task","company":"<role name>","due":"e.g. This week","text":"..."} — a NEW checkable task.
 - {"type":"update_task","match":"<words from the existing task's text>","due":"<new due, optional>","text":"<new title, optional>"} — to EDIT an existing task (use for "make that Friday", "rename the second task").
@@ -1473,7 +1551,7 @@ Action types:
 - {"type":"stage","company":"<existing name>","to":"<stage>","text":"..."} — only if clear progress on an EXISTING item.
 - {"type":"calendar","title":"<event>","month":"SEP","day":"8","time":"6:30 PM","text":"..."} — to add a dated meeting/event the user mentions.
 - {"type":"followup_ask","text":"..."} — when a follow-up MESSAGE to a person is implied; ask the user what to say, do not write it.
-Rules: if a JD/new role is present, start with add_company then advice then tasks pulled from the JD. For a follow-up tweak, return only the specific update_task/remove_task/calendar/stage action needed. If the user asks to find/connect with people at a company, include a find_people action. 3-6 actions max. JSON only.`;
+Rules: if a JD/new role is present, order the actions: add_company first; then — if a résumé is on file — the "Fit for <role>" strengths/gaps advice; then a short "How I'd approach this" advice; then 2-3 concrete tasks pulled from the JD. For a follow-up tweak, return only the specific update_task/remove_task/calendar/stage action needed. If the user asks to find/connect with people at a company, include a find_people action with its domain. 3-6 actions max. JSON only.`;
 }
 
 /* Parse a plan from raw model text: strips fences/prose, extracts the first balanced JSON object. */
@@ -1949,7 +2027,7 @@ function renderProposal(plan, container){
       </div>`;
     }
     if (a.type === "find_people") {
-      const links = linkedInSearches(a.company, a.role);
+      const links = linkedInSearches(a.company, a.role, a.domain);
       const linkHtml = links.map(l=>`<a href="${l.url}" target="_blank" rel="noopener" class="li-link">&#128279; ${esc(l.label)}</a>`).join("");
       const saveBtn = findCompanyByName(a.company) ? `<button class="save-note-btn" data-savenote="people" data-si="${i}">&#128221; Add to ${esc(a.company)} card</button>` : "";
       return `<div class="action-row advice-row" data-i="${i}">
@@ -2023,7 +2101,7 @@ function renderProposal(plan, container){
       const co = findCompanyByName(coName);
       if (!co) return;
       if (type === "people") {
-        addCompanyNote(co, "people", `People at ${co.name}`, "", { links: linkedInSearches(a.company, a.role) });
+        addCompanyNote(co, "people", `People at ${co.name}`, "", { links: linkedInSearches(a.company, a.role, a.domain) });
       } else {
         addCompanyNote(co, "advice", "AI advice", a.text);
       }
@@ -2060,6 +2138,7 @@ function applyPlan(plan, propEl){
         state.companies.push({
           id: t(), name: a.name, role: a.role || a.name,
           stage: startStage, steps, stepIdx: sIdx,
+          domain: a.domain || "",
           notes: [], isNew: true
         });
         logActivity(`Added ${a.name} to pipeline`);
@@ -2080,6 +2159,21 @@ function applyPlan(plan, propEl){
         } else if (a.role) { logActivity(`Updated ${co.name} role → ${a.role}`); }
       }
     } else if (a.type === "advice") {
+      // Auto-save the AI's advice/fit analysis to the relevant company card so it isn't lost on approve.
+      const co = findCompanyByName(a.company || plan.company);
+      if (co && text && text.trim()) {
+        const title = /^fit for|strengths:/i.test(text) ? "Fit analysis" : "AI advice";
+        addCompanyNote(co, "advice", title, text);
+        logActivity(`Saved ${title.toLowerCase()} to ${co.name}`);
+        expandedNotes[co.id] = true;
+      }
+    } else if (a.type === "find_people") {
+      const co = findCompanyByName(a.company || plan.company);
+      if (co) {
+        addCompanyNote(co, "people", `People at ${co.name}`, "", { links: linkedInSearches(a.company, a.role, a.domain) });
+        logActivity(`Saved LinkedIn searches to ${co.name}`);
+        expandedNotes[co.id] = true;
+      }
     } else if (a.type === "stage") {
       const co = state.companies.find(c => c.name === a.company || c.id === a.company);
       if (co) {
@@ -2303,7 +2397,7 @@ function greet(){
 
 /* ---------- Wire up ---------- */
 function init(){
-  renderPipeline(); renderTasks(); renderCalendar(); renderMode(); renderChips(); renderUsage(); renderAssistantName(); renderAvatar(); buildAvatarPicker(); renderStats(); renderActivity();
+  renderPipeline(); renderTasks(); renderCalendar(); renderMode(); renderChips(); renderUsage(); renderAssistantName(); renderAvatar(); buildAvatarPicker(); renderStats(); renderActivity(); renderResume();
 
   const firstRun = !state.profile.onboarded && !state.profile.name;
   greet();                         // always greet so the chat is never blank
@@ -2367,11 +2461,13 @@ function init(){
     $("settingsMenu").classList.remove("open");
     if (!confirm("Reset to the example pipeline? This replaces your current data on this device.")) return;
     const nm = state.profile.name;
+    const rsm = state.profile.resume;
     state = example(); state.profile.name = nm;
+    if (rsm && rsm.text) state.profile.resume = rsm;
     convo.length = 0;
     saveState();
     $("chatLog").innerHTML = "";
-    renderPipeline(); renderTasks(); renderCalendar();
+    renderPipeline(); renderTasks(); renderCalendar(); renderStats(); renderResume();
     greet();
   };
   $("addRoleBtn").onclick = addCompany;
